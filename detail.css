@@ -1,0 +1,754 @@
+/* Detail Page Specific Styles - Imports dashboard.css as base */
+@import url('dashboard.css');
+
+/* Override dashboard card hover effects for detail page - COMPLETE REMOVAL */
+.detail-image-card:hover,
+.detail-purchase-card:hover,
+.review-card:hover {
+    transform: none !important;
+    box-shadow: var(--glass-shadow) !important;
+    background: var(--bg-glass) !important;
+}
+
+.detail-image-card .game-cover:hover,
+.detail-image-card .detail-cover-img:hover,
+.detail-purchase-card:hover,
+.detail-description:hover {
+    transform: none !important;
+    filter: none !important;
+    scale: none !important;
+}
+
+/* Override dashboard game card scaling */
+.detail-image-card,
+.detail-purchase-card {
+    transition: none !important;
+}
+
+.detail-image-card:hover,
+.detail-purchase-card:hover {
+    transform: none !important;
+    scale: 1 !important;
+}
+
+/* Detail Page Layout */
+.detail-header {
+    margin-bottom: 2rem;
+}
+
+.detail-subtitle {
+    color: var(--text-muted);
+    font-size: 1rem;
+    margin-top: 0.5rem;
+}
+
+.detail-container {
+    width: 100%;
+}
+
+.detail-layout {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 3rem;
+    margin-bottom: 2rem;
+    align-items: start;
+}
+
+/* Left Section: Cover + Price + Buttons - Vertical Stack */
+.detail-left-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-image-card {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    height: fit-content;
+}
+
+.detail-cover {
+    position: relative;
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin: 0 0 1.5rem 0; /* Remove auto centering, use full width */
+}
+
+.detail-cover-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: none !important; /* Remove all transitions */
+}
+
+.detail-cover-img:hover {
+    transform: none !important;
+    scale: 1 !important;
+}
+
+/* Price Section - Now in left section below cover */
+.detail-price-section {
+    text-align: left;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 1rem;
+}
+
+.detail-price {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    gap: 1rem;
+    margin-bottom: 0;
+}
+
+.detail-price-main {
+    display: flex;
+    align-items: baseline;
+    gap: 0.8rem;
+}
+
+.detail-price .current-price {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--primary);
+}
+
+.detail-price .discounted-price {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--primary);
+}
+
+.detail-price .original-price {
+    font-size: 1.5rem;
+    text-decoration: line-through;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.detail-price .discount-badge {
+    background: #ef4444;
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    align-self: center;
+    margin-left: auto;
+}
+
+/* Action Buttons - Now in left section */
+.detail-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-top: 1rem;
+}
+
+/* Add to Cart Button */
+.detail-cart-btn {
+    flex: 1;
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: unset;
+}
+
+.detail-cart-btn:hover:not(:disabled) {
+    background: var(--primary-light);
+    transform: translateY(-2px);
+}
+
+.detail-cart-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.detail-cart-btn.added {
+    background: var(--success, #22c55e);
+}
+
+.detail-cart-btn.added:hover:not(:disabled) {
+    background: var(--success-light, #16a34a);
+}
+
+/* Wishlist Button */
+.detail-page-wishlist-btn {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    flex-shrink: 0;
+}
+
+.detail-page-wishlist-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.detail-page-wishlist-btn.active {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.5);
+    color: #ef4444;
+}
+
+.detail-page-wishlist-btn.active:hover:not(:disabled) {
+    background: rgba(239, 68, 68, 0.3);
+}
+
+.detail-page-wishlist-btn .heart-icon {
+    width: 24px;
+    height: 24px;
+    stroke: white;
+    fill: none;
+    stroke-width: 2;
+    transition: all 0.3s ease;
+}
+
+.detail-page-wishlist-btn.active .heart-icon {
+    fill: currentColor;
+    stroke: currentColor;
+}
+
+.detail-page-wishlist-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Right Section: Game Info + Description + Rating + Recent Reviews */
+.detail-right-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-right-section .detail-purchase-card {
+    padding: 2rem;
+    height: fit-content;
+}
+
+/* Game Info Section - Now in right side */
+.detail-game-info {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    order: 1;
+}
+
+.detail-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0 0 0.75rem 0;
+    line-height: 1.2;
+}
+
+.detail-developer {
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    margin: 0 0 0.5rem 0;
+    font-weight: 500;
+}
+
+.detail-category {
+    color: var(--primary);
+    font-size: 0.9rem;
+    margin: 0;
+    font-weight: 600;
+    background: rgba(139, 92, 246, 0.15);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: 20px;
+    padding: 0.4rem 1rem;
+    display: inline-block;
+    width: fit-content;
+}
+
+.detail-purchase-card {
+    padding: 2rem;
+    height: fit-content;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Description Section - Second in right side */
+.detail-description {
+    padding: 0 0 1rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 1.5rem;
+    margin-bottom: 2rem;
+    order: 2;
+}
+
+.detail-description h3 {
+    color: var(--primary);
+    font-size: 1.5rem; /* Bigger heading */
+    font-weight: 700; /* Bolder weight */
+    margin-bottom: 1rem;
+}
+
+.description-content {
+    line-height: 1.6;
+    color: var(--text-primary);
+    font-size: 1rem;
+    max-height: 150px;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.description-content.expanded {
+    max-height: none;
+}
+
+.read-more-btn {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.5rem 0;
+    font-size: 0.9rem;
+    transition: color 0.3s ease;
+    margin-top: 0.5rem;
+}
+
+.read-more-btn:hover {
+    color: var(--primary-light);
+}
+
+/* Rating Section - Third in right side */
+.detail-rating {
+    text-align: left;
+    padding: 1rem 0; 
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    order: 3;
+}
+
+.detail-rating h4 {
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 0.75rem 0;
+}
+
+.detail-rating .game-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.detail-rating .stars {
+    font-size: 1.35rem;
+}
+
+.detail-rating .rating-text {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+}
+
+/* Recent Review Preview - Below rating */
+.detail-recent-review {
+    padding: 1rem 0 0 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    order: 4;
+}
+
+.recent-review-title {
+    color: var(--text-primary);
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.recent-review-preview {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+    padding: 0.75rem;
+}
+
+.recent-review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.recent-reviewer-name {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.recent-review-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.recent-review-rating .stars {
+    font-size: 1rem;
+}
+
+.recent-review-rating .rating-value {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.recent-review-comment {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.4;
+    margin: 0 0 0.5rem 0;
+}
+
+.view-all-reviews-btn {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.8rem;
+    transition: var(--transition-fast);
+}
+
+.view-all-reviews-btn:hover {
+    color: var(--primary-light);
+    text-decoration: underline;
+}
+
+/* Reviews Section Styling - Override dashboard styles */
+.reviews-section {
+    margin-top: 3rem;
+}
+
+.reviews-section .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.reviews-section .section-title {
+    color: var(--text-primary);
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.reviews-section .review-count {
+    color: var(--text-muted);
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.reviews-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Review Card Styling */
+.reviews-section .review-card {
+    background: var(--bg-glass);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.reviews-section .review-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+/* Review Header */
+.reviews-section .review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    gap: 1rem;
+}
+
+.reviews-section .reviewer-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+}
+
+.reviews-section .reviewer-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    background: var(--bg-glass);
+}
+
+.reviews-section .reviewer-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.reviews-section .reviewer-name {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 1.05rem;
+}
+
+.reviews-section .review-date {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 400;
+}
+
+/* Review Rating */
+.reviews-section .review-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.reviews-section .review-rating .stars {
+    color: #fbbf24;
+    font-size: 1.2rem;
+}
+
+.reviews-section .review-rating .rating-value {
+    color: var(--text-muted);
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+/* Review Content */
+.reviews-section .review-content {
+    margin: 0;
+}
+
+.reviews-section .review-content p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+    font-size: 1rem;
+}
+
+/* Empty State */
+.reviews-section .empty-message {
+    text-align: center;
+    padding: 3rem 2rem;
+    background: var(--bg-glass);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-lg);
+    backdrop-filter: blur(10px);
+}
+
+.reviews-section .empty-icon {
+    width: 48px;
+    height: 48px;
+    color: var(--text-muted);
+    margin: 0 auto 1rem auto;
+    opacity: 0.7;
+}
+
+.reviews-section .empty-message h3 {
+    color: var(--text-primary);
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+}
+
+.reviews-section .empty-message p {
+    color: var(--text-muted);
+    font-size: 1rem;
+    margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .detail-layout {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+    
+    .detail-left-section {
+        order: 1;
+    }
+    
+    .detail-right-section {
+        order: 2;
+    }
+    
+    .detail-cover {
+        max-width: 300px;
+    }
+    
+    .detail-game-info {
+        text-align: center;
+    }
+    
+    .detail-price-section,
+    .detail-rating {
+        text-align: center;
+    }
+    
+    .detail-actions {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .detail-header {
+        margin-bottom: 1.5rem;
+    }
+    
+    .detail-title {
+        font-size: 1.7rem;
+    }
+    
+    .detail-purchase-card,
+    .detail-image-card {
+        padding: 1.5rem;
+    }
+    
+    .detail-actions {
+        gap: 0.75rem;
+    }
+    
+    .detail-cart-btn {
+        flex: 1;
+    }
+    
+    .detail-page-wishlist-btn {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .reviews-section .review-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .reviews-section .reviewer-info {
+        width: 100%;
+    }
+    
+    .reviews-section .reviewer-avatar {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .detail-layout {
+        gap: 1.5rem;
+    }
+    
+    .detail-cover {
+        height: 350px; /* Smaller height on tablet */
+    }
+    
+    .detail-price .current-price,
+    .detail-price .discounted-price {
+        font-size: 2rem;
+    }
+    
+    .detail-price .original-price {
+        font-size: 1.2rem;
+    }
+    
+    /* Make price section stack on mobile */
+    .detail-price {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .detail-price .discount-badge {
+        margin-left: 0;
+        align-self: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    .detail-layout {
+        gap: 1rem;
+    }
+    
+    .detail-purchase-card,
+    .detail-image-card,
+    .review-card {
+        padding: 1rem;
+    }
+    
+    .detail-title {
+        font-size: 1.4rem;
+    }
+    
+    .reviewer-info {
+        gap: 0.75rem;
+    }
+    
+    .reviews-section .reviewer-avatar {
+        width: 35px;
+        height: 35px;
+    }
+    
+    .detail-cover {
+        height: 300px; /* Even smaller on mobile */
+    }
+    
+    .detail-game-info,
+    .detail-price-section,
+    .detail-rating,
+    .detail-recent-review {
+        text-align: center;
+    }
+    
+    .detail-price .current-price,
+    .detail-price .discounted-price {
+        font-size: 1.8rem;
+    }
+    
+    .detail-price .original-price {
+        font-size: 1rem;
+    }
+    
+    .detail-price {
+        justify-content: center;
+    }
+    
+    .recent-review-preview {
+        padding: 0.5rem;
+    }
+    
+    .recent-review-title {
+        font-size: 1rem;
+    }
+}
