@@ -12,6 +12,17 @@ if (!isset($_SESSION['loginbtn']) || $_SESSION['loginbtn'] == false) {
 
 $user_id = $_SESSION['user_id'];
 
+// Check for payment success notification
+$payment_success = false;
+$order_id = null;
+if (isset($_SESSION['payment_success']) && $_SESSION['payment_success'] === true) {
+    $payment_success = true;
+    $order_id = $_SESSION['order_id'] ?? null;
+    // Clear the session variables
+    unset($_SESSION['payment_success']);
+    unset($_SESSION['order_id']);
+}
+
 // Get user's wishlist items
 $wishlist_ids = [];
 $get_wishlist = mysqli_query($con, "SELECT produk_id FROM wishlist WHERE user_id = '$user_id'");
@@ -108,6 +119,127 @@ function generateStarRating($avg_rating) {
             </div>
         </div>
     </nav>    <main class="main-content" id="main-content">
+        <?php if ($payment_success): ?>
+            <div class="payment-success-banner" style="
+                position: relative;
+                background: linear-gradient(135deg, #10b981, #059669);
+                color: white;
+                padding: var(--space-xl);
+                margin-bottom: var(--space-lg);
+                border-radius: var(--radius-lg);
+                box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                animation: slideInFromTop 0.6s ease-out;
+                overflow: hidden;
+            ">
+                <!-- Decorative background pattern -->
+                <div style="
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                    width: 200px;
+                    height: 200px;
+                    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+                    background-size: 20px 20px;
+                    opacity: 0.3;
+                    pointer-events: none;
+                "></div>
+                
+                <!-- Close button -->
+                <button onclick="closeBanner()" style="
+                    position: absolute;
+                    top: var(--space-md);
+                    right: var(--space-md);
+                    background: rgba(255, 255, 255, 0.2);
+                    border: none;
+                    color: white;
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: background 0.3s ease;
+                    font-size: 18px;
+                    line-height: 1;
+                " onmouseover="this.style.background='rgba(255, 255, 255, 0.3)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.2)'">
+                    ×
+                </button>
+
+                <div style="display: flex; align-items: center; justify-content: center; gap: var(--space-lg); position: relative; z-index: 1;">
+                    <!-- Success icon with animation -->
+                    <div style="
+                        width: 60px;
+                        height: 60px;
+                        background: rgba(255, 255, 255, 0.2);
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        animation: pulse 2s ease-in-out infinite;
+                    ">
+                        <svg style="width: 32px; height: 32px;" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
+                        </svg>
+                    </div>
+                    
+                    <div style="text-align: left;">
+                        <h3 style="margin: 0 0 var(--space-sm) 0; font-size: 1.4rem; font-weight: 700;">
+                            🎉 Payment Successful!
+                        </h3>
+                        <p style="margin: 0 0 var(--space-sm) 0; opacity: 0.9; font-size: 1rem; line-height: 1.5;">
+                            <?php if ($order_id): ?>
+                                Your order <strong>#<?php echo $order_id; ?></strong> has been confirmed.<br>
+                                Steam keys are being sent to your email now!
+                            <?php else: ?>
+                                Your order has been confirmed. Thank you for your purchase!<br>
+                                Steam keys are being sent to your email now!
+                            <?php endif; ?>
+                        </p>
+                        <div style="display: flex; gap: var(--space-md); margin-top: var(--space-md);">
+                            <a href="profile.php" style="
+                                background: rgba(255, 255, 255, 0.2);
+                                color: white;
+                                padding: var(--space-sm) var(--space-md);
+                                border-radius: var(--radius-md);
+                                text-decoration: none;
+                                font-size: 0.9rem;
+                                font-weight: 500;
+                                transition: all 0.3s ease;
+                                border: 1px solid rgba(255, 255, 255, 0.3);
+                            " onmouseover="this.style.background='rgba(255, 255, 255, 0.3)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.2)'">
+                                📋 View Order History
+                            </a>
+                            <a href="semua.php" style="
+                                background: rgba(255, 255, 255, 0.2);
+                                color: white;
+                                padding: var(--space-sm) var(--space-md);
+                                border-radius: var(--radius-md);
+                                text-decoration: none;
+                                font-size: 0.9rem;
+                                font-weight: 500;
+                                transition: all 0.3s ease;
+                                border: 1px solid rgba(255, 255, 255, 0.3);
+                            " onmouseover="this.style.background='rgba(255, 255, 255, 0.3)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.2)'">
+                                🎮 Browse More Games
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress bar for auto-hide -->
+                <div style="
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    height: 3px;
+                    background: rgba(255, 255, 255, 0.4);
+                    animation: shrinkWidth 8s linear forwards;
+                "></div>
+            </div>
+        <?php endif; ?>
+        
         <div class="content-layout">
             <aside class="categories-sidebar">
                 <div class="category-section">
@@ -656,8 +788,25 @@ function generateStarRating($avg_rating) {
             });
         }
 
+        // Close banner function
+        function closeBanner() {
+            const banner = document.querySelector('.payment-success-banner');
+            if (banner) {
+                banner.style.animation = 'slideUp 0.5s ease-out forwards';
+                setTimeout(() => banner.remove(), 500);
+            }
+        }
+
         // Initialize everything
         document.addEventListener('DOMContentLoaded', () => {
+            // Auto-hide payment success banner after 8 seconds
+            const paymentBanner = document.querySelector('.payment-success-banner');
+            if (paymentBanner) {
+                setTimeout(() => {
+                    closeBanner();
+                }, 8000);
+            }
+            
             // Add scroll to top
             addScrollToTop();
             

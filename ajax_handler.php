@@ -136,6 +136,53 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_cart_count') {
     exit();
 }
 
+// Handle get order items
+if (isset($_POST['action']) && $_POST['action'] === 'get_order_items') {
+    if (!isset($_POST['order_id'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Order ID required']);
+        exit();
+    }
+    
+    $order_id = mysqli_real_escape_string($con, $_POST['order_id']);
+    
+    // Verify order belongs to user
+    $order_check = mysqli_query($con, "SELECT id FROM orders WHERE id = '$order_id' AND user_id = '$user_id'");
+    if (mysqli_num_rows($order_check) == 0) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'message' => 'Order not found']);
+        exit();
+    }
+    
+    // Get order items with product details
+    $items_query = mysqli_query($con, "
+        SELECT oi.price, oi.steam_key,
+               p.nama, p.foto, p.pengembang, p.harga, p.harga_diskon
+        FROM order_items oi
+        JOIN produk p ON oi.produk_id = p.id
+        WHERE oi.order_id = '$order_id'
+        ORDER BY p.nama
+    ");
+    
+    if (mysqli_num_rows($items_query) > 0) {
+        $items = [];
+        while ($item = mysqli_fetch_assoc($items_query)) {
+            $items[] = $item;
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'items' => $items
+        ]);
+    } else {
+        echo json_encode([
+            'success' => false,
+            'message' => 'No items found for this order'
+        ]);
+    }
+    exit();
+}
+
 // If no valid action
 http_response_code(400);
 echo json_encode(['success' => false, 'message' => 'Invalid action']);

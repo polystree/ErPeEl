@@ -124,32 +124,6 @@ if (isset($_POST['simpan'])) {
     }
 }
 
-if (isset($_POST['toggle_wishlist']) && isset($_POST['produk_id'])) {
-    $produk_id = mysqli_real_escape_string($con, $_POST['produk_id']);
-
-    $check_wishlist = mysqli_query($con, "SELECT * FROM wishlist WHERE produk_id = '$produk_id' AND user_id = '$user_id'");
-
-    if (mysqli_num_rows($check_wishlist) > 0) {
-        $delete_wishlist = mysqli_query($con, "DELETE FROM wishlist WHERE produk_id = '$produk_id' AND user_id = '$user_id'");
-        if (!$delete_wishlist) {
-            http_response_code(500);
-            echo "Error removing item from wishlist.";
-
-            exit();
-        }
-    } else {
-
-        $add_wishlist = mysqli_query($con, "INSERT INTO wishlist (produk_id, user_id) VALUES ('$produk_id', '$user_id')");
-        if (!$add_wishlist) {
-            http_response_code(500);
-            echo "Error adding item to wishlist.";
-            exit();
-        }
-    }
-    http_response_code(200);
-    echo "Wishlist updated successfully.";
-}
-
 $select_wishlist = mysqli_query($con, "SELECT c.*, p.nama, p.pengembang, p.foto, p.harga, p.harga_diskon FROM wishlist c JOIN produk p ON c.produk_id = p.id WHERE c.user_id = '$user_id'") or die('Query failed');
 
 
@@ -424,21 +398,75 @@ if (isset($_POST['logout'])) {
                     $select_orders = mysqli_query($con, "SELECT id, user_id, total, created_at FROM orders WHERE user_id = '$user_id' ORDER BY created_at DESC");
                     if (mysqli_num_rows($select_orders) > 0): ?>
                         <div class="game-container" style="grid-template-columns: 1fr;">
-                            <?php while ($fetch_orders = mysqli_fetch_assoc($select_orders)): ?>
-                                <div class="game-card" style="cursor: pointer;" onclick="window.location.href='detailorder.php?order_id=<?php echo $fetch_orders['id']; ?>'">
-                                    <div class="game-info">
-                                        <div class="game-price">
-                                            <span class="current-price">$<?php echo number_format($fetch_orders['total'], 2); ?></span>
-                                            <span class="new-badge">Completed</span>
+                            <?php while ($fetch_orders = mysqli_fetch_assoc($select_orders)): 
+                                // Get item count for this order
+                                $order_id = $fetch_orders['id'];
+                                $count_query = mysqli_query($con, "SELECT COUNT(*) as item_count FROM order_items WHERE order_id = '$order_id'");
+                                $item_count = mysqli_fetch_assoc($count_query)['item_count'];
+                            ?>
+                                <div class="game-card" style="cursor: pointer; transition: all 0.3s ease;" 
+                                     onclick="toggleOrderDetails(<?php echo $order_id; ?>)"
+                                     onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(139, 92, 246, 0.2)'"
+                                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow=''">
+                                    <div class="game-info" style="padding: var(--space-xl);">
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-md);">
+                                            <div>
+                                                <h3 class="game-title" style="margin-bottom: var(--space-xs);">
+                                                    Order #<?php echo $order_id; ?>
+                                                </h3>
+                                                <p class="game-developer" style="margin-bottom: var(--space-sm);">
+                                                    <?php echo date("M d, Y", strtotime($fetch_orders['created_at'])); ?> at 
+                                                    <?php echo date("H:i", strtotime($fetch_orders['created_at'])); ?>
+                                                </p>
+                                                <div style="display: flex; align-items: center; gap: var(--space-md);">
+                                                    <span style="color: var(--text-secondary); font-size: 0.9rem;">
+                                                        <?php echo $item_count; ?> 
+                                                        <?php echo $item_count == 1 ? 'item' : 'items'; ?>
+                                                    </span>
+                                                    <span style="background: var(--success); color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 500;">Completed</span>
+                                                </div>
+                                            </div>
+                                            <div style="text-align: right;">
+                                                <div class="game-price" style="margin-bottom: var(--space-sm);">
+                                                    <span class="current-price" style="font-size: 1.2rem;">
+                                                        $<?php echo number_format($fetch_orders['total'], 2); ?>
+                                                    </span>
+                                                </div>
+                                                <button class="add-to-cart-btn" style="padding: var(--space-sm) var(--space-md); font-size: 0.85rem;"
+                                                        onclick="event.stopPropagation(); toggleOrderDetails(<?php echo $order_id; ?>)">
+                                                    <span id="btn-text-<?php echo $order_id; ?>">View Details</span>
+                                                    <svg id="btn-icon-<?php echo $order_id; ?>" style="width: 12px; height: 12px; margin-left: var(--space-xs); transition: transform 0.3s ease;" viewBox="0 0 24 24" fill="currentColor">
+                                                        <path d="M7,10L12,15L17,10H7Z"/>
+                                                    </svg>
+                                                </button>
+                                            </div>
                                         </div>
-                                        <h3 class="game-title">Order #<?php echo $fetch_orders['id']; ?></h3>
-                                        <p class="game-developer">
-                                            <?php echo date("M d, Y", strtotime($fetch_orders['created_at'])); ?> at 
-                                            <?php echo date("H:i", strtotime($fetch_orders['created_at'])); ?>
-                                        </p>
-                                        <button class="add-to-cart-btn" onclick="event.stopPropagation(); window.location.href='detailorder.php?order_id=<?php echo $fetch_orders['id']; ?>'">
-                                            View Details
-                                        </button>
+                                        
+                                        <!-- Order Details (Initially Hidden) -->
+                                        <div id="order-details-<?php echo $order_id; ?>" 
+                                             style="display: none; margin-top: var(--space-lg); padding-top: var(--space-lg); border-top: 1px solid var(--glass-border);">
+                                            <div style="margin-bottom: var(--space-md);">
+                                                <h4 style="color: var(--primary); margin-bottom: var(--space-sm); font-size: 1rem;">Order Items:</h4>
+                                                <div id="order-items-<?php echo $order_id; ?>" style="display: grid; gap: var(--space-sm);">
+                                                    <!-- Items will be loaded here -->
+                                                    <div style="text-align: center; padding: var(--space-md); color: var(--text-secondary);">
+                                                        <div class="loading-spinner" style="display: inline-block; width: 20px; height: 20px; border: 2px solid var(--glass-border); border-top: 2px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                                                        <span style="margin-left: var(--space-sm);">Loading items...</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div style="display: flex; gap: var(--space-md); justify-content: flex-end;">
+                                                <button class="add-to-cart-btn" style="background: var(--bg-glass); color: var(--text-primary); padding: var(--space-sm) var(--space-md); font-size: 0.85rem;"
+                                                        onclick="event.stopPropagation(); window.open('mailto:support@vault.com?subject=Order Support - Order #<?php echo $order_id; ?>', '_blank')">
+                                                    📧 Contact Support
+                                                </button>
+                                                <button class="add-to-cart-btn" style="padding: var(--space-sm) var(--space-md); font-size: 0.85rem;"
+                                                        onclick="event.stopPropagation(); window.location.href='semua.php'">
+                                                    🎮 Buy More Games
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             <?php endwhile; ?>
@@ -461,6 +489,13 @@ if (isset($_POST['logout'])) {
             </div>
         </div>
     </main>
+    
+    <div id="wishlist-notification" class="wishlist-notification" role="alert" aria-live="polite">
+        <svg class="heart-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+        <span class="wishlist-message"></span>
+    </div>
     
     <footer role="contentinfo">
         <div class="footer-content">
@@ -691,15 +726,16 @@ if (isset($_POST['logout'])) {
             button.classList.toggle('active', newStatus);
             button.disabled = true;
 
-            // Send AJAX request
-            fetch("profile.php", {
+            // Send AJAX request using dashboard pattern
+            fetch("ajax_handler.php", {
                 method: "POST",
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: `toggle_wishlist=true&produk_id=${produkId}`
+                body: `action=toggle_wishlist&produk_id=${produkId}`
             })
-            .then(response => response.text())
+            .then(response => response.json())
             .then(data => {
-                if (data.includes('successfully')) {
+                if (data.success) {
+                    showNotification(data.message, 'success');
                     if (inWishlist) {
                         // Remove the card from the wishlist view
                         const gameCard = button.closest('.game-card');
@@ -713,12 +749,11 @@ if (isset($_POST['logout'])) {
                             }
                         }, 300);
                     }
-                    showNotification(inWishlist ? 'Removed from wishlist' : 'Added to wishlist', 'success');
                 } else {
                     // Revert UI changes on error
                     button.setAttribute("data-in-wishlist", inWishlist.toString());
                     button.classList.toggle('active', inWishlist);
-                    showNotification("Failed to update wishlist", "error");
+                    showNotification(data.message || "Failed to update wishlist", "error");
                 }
             })
             .catch((error) => {
@@ -733,30 +768,395 @@ if (isset($_POST['logout'])) {
             });
         }
 
-        // Simple notification system
-        function showNotification(message, type = 'success') {
-            // Remove existing notifications
-            const existingNotifications = document.querySelectorAll('.notification');
-            existingNotifications.forEach(n => n.remove());
+        // Order details functionality
+        function toggleOrderDetails(orderId) {
+            const detailsDiv = document.getElementById(`order-details-${orderId}`);
+            const btnText = document.getElementById(`btn-text-${orderId}`);
+            const btnIcon = document.getElementById(`btn-icon-${orderId}`);
+            const itemsDiv = document.getElementById(`order-items-${orderId}`);
+            
+            if (detailsDiv.style.display === 'none' || detailsDiv.style.display === '') {
+                // Show details
+                detailsDiv.style.display = 'block';
+                btnText.textContent = 'Hide Details';
+                btnIcon.style.transform = 'rotate(180deg)';
+                
+                // Load order items if not already loaded
+                if (itemsDiv.innerHTML.includes('Loading items...')) {
+                    loadOrderItems(orderId);
+                }
+            } else {
+                // Hide details
+                detailsDiv.style.display = 'none';
+                btnText.textContent = 'View Details';
+                btnIcon.style.transform = 'rotate(0deg)';
+            }
+        }
+        
+        function loadOrderItems(orderId) {
+            const itemsDiv = document.getElementById(`order-items-${orderId}`);
+            
+            // Send AJAX request to load order items
+            fetch('ajax_handler.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `action=get_order_items&order_id=${orderId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.items) {
+                    let itemsHtml = '';
+                    data.items.forEach(item => {
+                        const hasDiscount = item.harga_diskon && item.harga_diskon < item.harga;
+                        itemsHtml += `
+                            <div style="display: flex; align-items: center; gap: var(--space-md); padding: var(--space-md); background: var(--bg-glass); border-radius: var(--radius-md); border: 1px solid var(--glass-border);">
+                                <img src="image/${item.foto}" alt="${item.nama}" 
+                                     style="width: 48px; height: 64px; object-fit: cover; border-radius: var(--radius-sm); flex-shrink: 0;">
+                                <div style="flex: 1; min-width: 0;">
+                                    <h5 style="color: var(--text-primary); margin: 0 0 var(--space-xs) 0; font-weight: 600;">${item.nama}</h5>
+                                    <p style="color: var(--text-secondary); margin: 0; font-size: 0.85rem;">${item.pengembang}</p>
+                                </div>
+                                <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-sm);">
+                                    <span style="color: var(--primary); font-weight: 600;">$${parseFloat(item.price).toFixed(2)}</span>
+                                    <button onclick="event.stopPropagation(); showSteamKey('${item.steam_key}', '${item.nama.replace(/'/g, "\\'")}');" 
+                                            style="background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);"
+                                            onmouseover="this.style.background='var(--primary-hover)'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(139, 92, 246, 0.4)'" 
+                                            onmouseout="this.style.background='var(--primary)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(139, 92, 246, 0.3)'">
+                                        🔑 See Code
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    itemsDiv.innerHTML = itemsHtml;
+                } else {
+                    itemsDiv.innerHTML = `
+                        <div style="text-align: center; padding: var(--space-md); color: var(--text-secondary);">
+                            <span>⚠️ Unable to load order items</span>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading order items:', error);
+                itemsDiv.innerHTML = `
+                    <div style="text-align: center; padding: var(--space-md); color: var(--danger);">
+                        <span>❌ Error loading items. Please try again.</span>
+                    </div>
+                `;
+            });
+        }
 
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.innerHTML = `
-                <svg class="heart-icon" viewBox="0 0 24 24" fill="currentColor" style="width: 20px; height: 20px; margin-right: 8px;">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                </svg>
-                <span>${message}</span>
+        // Function to show Steam key in a modal
+        function showSteamKey(steamKey, gameName) {
+            // Create modal backdrop
+            const modalBackdrop = document.createElement('div');
+            modalBackdrop.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 2000;
+                animation: modalFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             `;
             
-            document.body.appendChild(notification);
+            // Create modal content
+            const modalContent = document.createElement('div');
+            modalContent.style.cssText = `
+                background: rgba(13, 13, 13, 0.95);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border: 1px solid rgba(139, 92, 246, 0.3);
+                border-radius: 20px;
+                padding: 2rem;
+                max-width: 520px;
+                width: 90%;
+                text-align: center;
+                box-shadow: 
+                    0 25px 50px rgba(0, 0, 0, 0.5),
+                    0 0 0 1px rgba(255, 255, 255, 0.05),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+                animation: modalSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                position: relative;
+                overflow: hidden;
+            `;
             
-            // Trigger animation
-            setTimeout(() => notification.classList.add('show'), 100);
+            modalContent.innerHTML = `
+                <!-- Gradient overlay for glassmorphism effect -->
+                <div style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 1px;
+                    background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.5), transparent);
+                "></div>
+                
+                <div style="margin-bottom: 1.5rem; position: relative; z-index: 1;">
+                    <div style="
+                        width: 80px; 
+                        height: 80px; 
+                        background: linear-gradient(135deg, #8b5cf6, #a855f7);
+                        border-radius: 50%; 
+                        display: flex; 
+                        align-items: center; 
+                        justify-content: center; 
+                        margin: 0 auto 1rem auto;
+                        box-shadow: 
+                            0 8px 32px rgba(139, 92, 246, 0.3),
+                            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+                        position: relative;
+                        overflow: hidden;
+                    ">
+                        <div style="
+                            position: absolute;
+                            top: -50%;
+                            left: -50%;
+                            width: 200%;
+                            height: 200%;
+                            background: conic-gradient(from 0deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+                            animation: rotate 3s linear infinite;
+                        "></div>
+                        <svg style="width: 40px; height: 40px; color: white; position: relative; z-index: 1;" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M7,14A3,3 0 0,1 10,17A3,3 0 0,1 7,20A3,3 0 0,1 4,17A3,3 0 0,1 7,14M12.65,10C11.83,7.67 9.61,6 7,6A6,6 0 0,0 1,12A6,6 0 0,0 7,18C9.61,18 11.83,16.33 12.65,14H17V18A2,2 0 0,0 19,20H20V22H24V18A6,6 0 0,0 18,12A6,6 0 0,0 12.65,10Z"/>
+                        </svg>
+                    </div>
+                    <h3 style="
+                        color: #ffffff; 
+                        margin: 0 0 0.5rem 0; 
+                        font-size: 1.5rem; 
+                        font-weight: 700;
+                        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+                    ">Steam Activation Key</h3>
+                    <p style="
+                        color: rgba(255, 255, 255, 0.7); 
+                        margin: 0 0 1.5rem 0; 
+                        font-size: 1rem;
+                        font-weight: 500;
+                    ">${gameName}</p>
+                </div>
+                
+                <div style="
+                    background: rgba(255, 255, 255, 0.05);
+                    backdrop-filter: blur(10px);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: 16px;
+                    padding: 1.5rem;
+                    margin-bottom: 1.5rem;
+                    position: relative;
+                    overflow: hidden;
+                ">
+                    <div style="
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        height: 1px;
+                        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+                    "></div>
+                    
+                    <label style="
+                        display: block;
+                        color: rgba(255, 255, 255, 0.8);
+                        font-size: 0.85rem;
+                        font-weight: 600;
+                        margin-bottom: 0.75rem;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                    ">Your Activation Code</label>
+                    
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <input type="text" value="${steamKey}" readonly 
+                               style="
+                                   flex: 1;
+                                   background: rgba(0, 0, 0, 0.3);
+                                   border: 1px solid rgba(255, 255, 255, 0.2);
+                                   border-radius: 12px;
+                                   padding: 0.875rem 1rem;
+                                   color: #ffffff;
+                                   font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+                                   font-size: 1rem;
+                                   font-weight: 600;
+                                   text-align: center;
+                                   letter-spacing: 1px;
+                                   backdrop-filter: blur(5px);
+                                   transition: all 0.3s ease;
+                                   outline: none;
+                               "
+                               id="steam-key-input"
+                               onfocus="this.select()"
+                               onmouseover="this.style.borderColor='rgba(139, 92, 246, 0.4)'"
+                               onmouseout="this.style.borderColor='rgba(255, 255, 255, 0.2)'">
+                        <button onclick="copyToClipboard('${steamKey}')" 
+                                style="
+                                    background: linear-gradient(135deg, #8b5cf6, #a855f7);
+                                    color: white;
+                                    border: none;
+                                    padding: 0.875rem 1.25rem;
+                                    border-radius: 12px;
+                                    cursor: pointer;
+                                    font-size: 0.9rem;
+                                    font-weight: 600;
+                                    transition: all 0.3s ease;
+                                    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 0.5rem;
+                                "
+                                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(139, 92, 246, 0.6)'"
+                                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(139, 92, 246, 0.4)'">
+                            <svg style="width: 16px; height: 16px;" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"/>
+                            </svg>
+                            Copy
+                        </button>
+                    </div>
+                </div>
+                
+                <div style="
+                    background: rgba(255, 255, 255, 0.03);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    border-radius: 12px;
+                    padding: 1.25rem;
+                    margin-bottom: 1.5rem;
+                    text-align: left;
+                ">
+                    <h4 style="
+                        color: #ffffff;
+                        margin: 0 0 0.75rem 0;
+                        font-size: 1rem;
+                        font-weight: 600;
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                    ">
+                        <svg style="width: 18px; height: 18px; color: #8b5cf6;" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M11,15H13V17H11V15M11,7H13V13H11V7M12,2C6.47,2 2,6.5 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20Z"/>
+                        </svg>
+                        How to Redeem
+                    </h4>
+                    <ol style="
+                        color: rgba(255, 255, 255, 0.8);
+                        margin: 0;
+                        padding-left: 1.25rem;
+                        line-height: 1.6;
+                        font-size: 0.9rem;
+                    ">
+                        <li style="margin-bottom: 0.5rem;">Open Steam and log into your account</li>
+                        <li style="margin-bottom: 0.5rem;">Click <strong>"Games"</strong> → <strong>"Activate a Product on Steam"</strong></li>
+                        <li>Enter the code above and follow the instructions</li>
+                    </ol>
+                </div>
+                
+                <button onclick="closeModal()" 
+                        style="
+                            background: rgba(255, 255, 255, 0.1);
+                            backdrop-filter: blur(10px);
+                            color: #ffffff;
+                            border: 1px solid rgba(255, 255, 255, 0.2);
+                            padding: 0.875rem 2rem;
+                            border-radius: 12px;
+                            cursor: pointer;
+                            font-size: 1rem;
+                            font-weight: 600;
+                            transition: all 0.3s ease;
+                            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+                        "
+                        onmouseover="this.style.background='rgba(255, 255, 255, 0.15)'; this.style.transform='translateY(-1px)'"
+                        onmouseout="this.style.background='rgba(255, 255, 255, 0.1)'; this.style.transform='translateY(0)'">
+                    Close
+                </button>
+            `;
             
-            // Auto remove after 3 seconds
+            modalBackdrop.appendChild(modalContent);
+            document.body.appendChild(modalBackdrop);
+            
+            // Prevent body scroll when modal is open
+            document.body.style.overflow = 'hidden';
+            
+            // Close modal function
+            window.closeModal = function() {
+                modalBackdrop.style.animation = 'modalFadeOut 0.3s ease-out';
+                modalContent.style.animation = 'modalSlideOut 0.3s ease-out';
+                setTimeout(() => {
+                    if (document.body.contains(modalBackdrop)) {
+                        document.body.removeChild(modalBackdrop);
+                    }
+                    document.body.style.overflow = 'auto';
+                    delete window.closeModal;
+                    delete window.copyToClipboard;
+                }, 300);
+            };
+            
+            // Copy to clipboard function
+            window.copyToClipboard = function(text) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showNotification('Steam key copied to clipboard! 🎮', 'success');
+                    
+                    // Visual feedback on copy button
+                    const copyBtn = event.target.closest('button');
+                    const originalHTML = copyBtn.innerHTML;
+                    copyBtn.innerHTML = `
+                        <svg style="width: 16px; height: 16px;" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
+                        </svg>
+                        Copied!
+                    `;
+                    copyBtn.style.background = 'linear-gradient(135deg, #22c55e, #16a34a)';
+                    
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalHTML;
+                        copyBtn.style.background = 'linear-gradient(135deg, #8b5cf6, #a855f7)';
+                    }, 1500);
+                }).catch(() => {
+                    // Fallback for older browsers
+                    const input = document.getElementById('steam-key-input');
+                    input.select();
+                    input.setSelectionRange(0, 99999); // For mobile devices
+                    document.execCommand('copy');
+                    showNotification('Steam key copied to clipboard! 🎮', 'success');
+                });
+            };
+            
+            // Close on backdrop click (but not on content click)
+            modalBackdrop.addEventListener('click', (e) => {
+                if (e.target === modalBackdrop) {
+                    closeModal();
+                }
+            });
+            
+            // Prevent content clicks from closing modal
+            modalContent.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+            
+            // Close on Escape key
+            const escapeHandler = function(e) {
+                if (e.key === 'Escape') {
+                    closeModal();
+                    document.removeEventListener('keydown', escapeHandler);
+                }
+            };
+            document.addEventListener('keydown', escapeHandler);
+        }
+
+        // Simple notification system - matching dashboard pattern
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('wishlist-notification');
+            const messageEl = notification.querySelector('.wishlist-message');
+            
+            messageEl.textContent = message;
+            notification.className = `wishlist-notification ${type} show`;
+            
             setTimeout(() => {
                 notification.classList.remove('show');
-                setTimeout(() => notification.remove(), 300);
             }, 3000);
         }
 
@@ -767,34 +1167,63 @@ if (isset($_POST['logout'])) {
                 from { opacity: 1; transform: translateY(0); }
                 to { opacity: 0; transform: translateY(-20px); }
             }
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
             @keyframes spin {
                 from { transform: rotate(0deg); }
                 to { transform: rotate(360deg); }
             }
-            .notification {
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 1rem 1.5rem;
-                border-radius: var(--radius-lg);
-                color: white;
-                font-weight: 500;
-                z-index: 1000;
-                transform: translateX(100%);
-                transition: transform var(--transition-normal);
-                display: flex;
-                align-items: center;
-                backdrop-filter: var(--glass-blur);
-                box-shadow: var(--glass-shadow);
+            @keyframes rotate {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
             }
-            .notification.show {
-                transform: translateX(0);
+            @keyframes modalFadeIn {
+                from { 
+                    opacity: 0; 
+                    backdrop-filter: blur(0px);
+                    -webkit-backdrop-filter: blur(0px);
+                }
+                to { 
+                    opacity: 1; 
+                    backdrop-filter: blur(8px);
+                    -webkit-backdrop-filter: blur(8px);
+                }
             }
-            .notification.success {
-                background: var(--success);
+            @keyframes modalFadeOut {
+                from { 
+                    opacity: 1; 
+                    backdrop-filter: blur(8px);
+                    -webkit-backdrop-filter: blur(8px);
+                }
+                to { 
+                    opacity: 0; 
+                    backdrop-filter: blur(0px);
+                    -webkit-backdrop-filter: blur(0px);
+                }
             }
-            .notification.error {
-                background: var(--danger);
+            @keyframes modalSlideIn {
+                from { 
+                    opacity: 0; 
+                    transform: translateY(-30px) scale(0.95);
+                    backdrop-filter: blur(5px);
+                }
+                to { 
+                    opacity: 1; 
+                    transform: translateY(0) scale(1);
+                    backdrop-filter: blur(20px);
+                }
+            }
+            @keyframes modalSlideOut {
+                from { 
+                    opacity: 1; 
+                    transform: translateY(0) scale(1);
+                }
+                to { 
+                    opacity: 0; 
+                    transform: translateY(-30px) scale(0.95);
+                }
             }
             .sidebar-header {
                 text-align: center;
