@@ -238,12 +238,16 @@ if (isset($_POST['add_to_wishlist']) || isset($_POST['remove_from_wishlist'])) {
                                         <span>$<?php echo number_format($total_price, 2); ?></span>
                                     </div>
                                     <div class="summary-row">
-                                        <span>Tax</span>
-                                        <span>$0.00</span>
+                                        <span>Processing Fee</span>
+                                        <span>$2.99</span>
+                                    </div>
+                                    <div class="summary-row">
+                                        <span>Tax (11%)</span>
+                                        <span>$<?php echo number_format(($total_price + 2.99) * 0.11, 2); ?></span>
                                     </div>
                                     <div class="summary-row total-row">
                                         <span>Total</span>
-                                        <span>$<?php echo number_format($total_price, 2); ?></span>
+                                        <span>$<?php echo number_format(($total_price + 2.99) * 1.11, 2); ?></span>
                                     </div>
                                     
                                     <div class="checkout-actions">

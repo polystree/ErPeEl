@@ -273,10 +273,15 @@ if (isset($_POST['payment_form'])) {
                             <span style="color: var(--text-primary); font-weight: 500;">$2.99</span>
                         </div>
                         
+                        <div class="summary-line" style="display: flex; justify-content: space-between; margin-bottom: var(--space-sm);">
+                            <span style="color: var(--text-secondary);">Tax (11%)</span>
+                            <span style="color: var(--text-primary); font-weight: 500;">$<?php echo number_format(($total_harga + 2.99) * 0.11, 2); ?></span>
+                        </div>
+                        
                         <div style="border-top: 1px solid var(--glass-border); padding-top: var(--space-lg); margin-bottom: var(--space-xl);">
                             <div class="summary-line" style="display: flex; justify-content: space-between;">
                                 <span style="color: var(--text-primary); font-weight: 600; font-size: 1.1rem;">Total</span>
-                                <span style="color: var(--primary); font-weight: 700; font-size: 1.2rem;">$<?php echo number_format($total_harga + 2.99, 2); ?></span>
+                                <span style="color: var(--primary); font-weight: 700; font-size: 1.2rem;">$<?php echo number_format(($total_harga + 2.99) * 1.11, 2); ?></span>
                             </div>
                         </div>
                         
