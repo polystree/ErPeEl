@@ -22,6 +22,54 @@ if (mysqli_num_rows($select_profile) > 0) {
 
 if (isset($_POST['simpan'])) {
     $new_username = mysqli_real_escape_string($con, $_POST['username']);
+    $current_password = $_POST['current_password'] ?? '';
+    $new_password = $_POST['new_password'] ?? '';
+    $confirm_password = $_POST['confirm_password'] ?? '';
+    
+    // Validate password change if passwords are provided
+    if (!empty($current_password) || !empty($new_password) || !empty($confirm_password)) {
+        if (empty($current_password)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Current password is required to change password.']);
+            exit();
+        }
+        
+        if (empty($new_password)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'New password cannot be empty.']);
+            exit();
+        }
+        
+        if (strlen($new_password) < 6) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'New password must be at least 6 characters long.']);
+            exit();
+        }
+        
+        if ($new_password !== $confirm_password) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'New password and confirmation do not match.']);
+            exit();
+        }
+        
+        // Verify current password
+        $check_password = mysqli_query($con, "SELECT password FROM users WHERE id = '$user_id'");
+        if ($check_password && mysqli_num_rows($check_password) > 0) {
+            $user_data = mysqli_fetch_assoc($check_password);
+            if (!password_verify($current_password, $user_data['password'])) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Current password is incorrect.']);
+                exit();
+            }
+        } else {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Error verifying current password.']);
+            exit();
+        }
+        
+        // Hash new password
+        $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+    }
 
     if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
         $file_name = $_FILES['image']['name'];
@@ -32,26 +80,48 @@ if (isset($_POST['simpan'])) {
         $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
 
         if (!in_array($file_extension, $valid_extensions)) {
-            echo "<script>alert('Ekstensi gambar tidak valid.');</script>";
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Invalid image extension.']);
+            exit();
         } elseif ($file_size > 10000000) {
-            echo "<script>alert('Ukuran file terlalu besar. Maksimal 10 MB.');</script>";
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'File size too large. Maximum 10 MB.']);
+            exit();
         } else {
             $new_image_name = uniqid() . '.' . $file_extension;
             $upload_path = 'image/' . $new_image_name;
 
             if (move_uploaded_file($tmp_name, $upload_path)) {
-                $queryupdate = "UPDATE users SET username='$new_username', foto='$new_image_name' WHERE id='$user_id'";
+                if (isset($hashed_password)) {
+                    $queryupdate = "UPDATE users SET username='$new_username', foto='$new_image_name', password='$hashed_password' WHERE id='$user_id'";
+                } else {
+                    $queryupdate = "UPDATE users SET username='$new_username', foto='$new_image_name' WHERE id='$user_id'";
+                }
             } else {
-                echo "<script>alert('Gagal mengunggah gambar.');</script>";
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Failed to upload image.']);
+                exit();
             }
         }
     } else {
-        $queryupdate = "UPDATE users SET username='$new_username' WHERE id='$user_id'";
+        if (isset($hashed_password)) {
+            $queryupdate = "UPDATE users SET username='$new_username', password='$hashed_password' WHERE id='$user_id'";
+        } else {
+            $queryupdate = "UPDATE users SET username='$new_username' WHERE id='$user_id'";
+        }
     }
 
-    mysqli_query($con, $queryupdate) or die(mysqli_error($con));
-    header("Location: profile.php");
-    exit();
+    if (isset($queryupdate)) {
+        if (mysqli_query($con, $queryupdate)) {
+            http_response_code(200);
+            echo json_encode(['success' => true, 'message' => 'Profile updated successfully!']);
+            exit();
+        } else {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Database error: ' . mysqli_error($con)]);
+            exit();
+        }
+    }
 }
 
 if (isset($_POST['toggle_wishlist']) && isset($_POST['produk_id'])) {
@@ -164,7 +234,6 @@ if (isset($_POST['logout'])) {
                     </div>
                     <div class="user-info">
                         <h3 class="user-name"><?php echo htmlspecialchars($username); ?></h3>
-                        <p class="user-id">ID: #<?php echo htmlspecialchars($user_id); ?></p>
                     </div>
                 </div>
                 
@@ -203,7 +272,7 @@ if (isset($_POST['logout'])) {
                         <div class="game-card" style="cursor: default; transform: none;">
                             <div class="game-info" style="padding: var(--space-xl);">
                                 <!-- Horizontal Layout: Photo on Left, Info on Right -->
-                                <div class="profile-horizontal-layout" style="display: flex; gap: var(--space-2xl); align-items: flex-start; margin-bottom: var(--space-xl);">
+                                <div class="profile-horizontal-layout" style="display: flex; gap: var(--space-2xl); align-items: flex-start;">
                                     <!-- Profile Photo Section -->
                                     <div class="profile-photo-section" style="flex-shrink: 0;">
                                         <div style="text-align: center;">
@@ -216,14 +285,13 @@ if (isset($_POST['logout'])) {
                                     
                                     <!-- User Information Section -->
                                     <div class="profile-info-section" style="flex: 1; min-width: 0;">
-                                        <form method="POST" enctype="multipart/form-data" class="profile-form">
-                                            <input type="file" name="image" accept="image/*" 
-                                                   class="file-input" id="photo-input" style="display: none;">
+                                        <div class="profile-form">
+                                            <input type="file" accept="image/*" class="file-input" id="photo-input" style="display: none;">
                                             
                                             <div class="profile-form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-lg); margin-bottom: var(--space-xl);">
                                                 <div>
                                                     <label style="display: block; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: var(--space-sm); font-weight: 500;">Username</label>
-                                                    <input type="text" name="username" 
+                                                    <input type="text" id="username-input"
                                                            value="<?php echo htmlspecialchars($username); ?>" 
                                                            class="search-input" style="width: 100%; margin: 0;"
                                                            required>
@@ -238,26 +306,49 @@ if (isset($_POST['logout'])) {
                                                 </div>
                                                 
                                                 <div>
-                                                    <label style="display: block; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: var(--space-sm); font-weight: 500;">User ID</label>
-                                                    <input type="text" 
-                                                           value="#<?php echo htmlspecialchars($user_id); ?>" 
-                                                           class="search-input" style="width: 100%; margin: 0; opacity: 0.6;"
-                                                           disabled readonly>
+                                                    <label style="display: block; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: var(--space-sm); font-weight: 500;">Current Password</label>
+                                                    <input type="password" id="current-password-input"
+                                                           placeholder="Enter current password" 
+                                                           class="search-input" style="width: 100%; margin: 0;">
+                                                    <small style="color: var(--text-secondary); font-size: 0.8rem; margin-top: var(--space-xs); display: block;">Leave empty to keep current password</small>
+                                                </div>
+                                                
+                                                <div>
+                                                    <label style="display: block; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: var(--space-sm); font-weight: 500;">New Password</label>
+                                                    <input type="password" id="new-password-input"
+                                                           placeholder="Enter new password" 
+                                                           class="search-input" style="width: 100%; margin: 0;">
+                                                    <small style="color: var(--text-secondary); font-size: 0.8rem; margin-top: var(--space-xs); display: block;">Minimum 6 characters</small>
+                                                </div>
+                                                
+                                                <div>
+                                                    <label style="display: block; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: var(--space-sm); font-weight: 500;">Confirm New Password</label>
+                                                    <input type="password" id="confirm-password-input"
+                                                           placeholder="Confirm new password" 
+                                                           class="search-input" style="width: 100%; margin: 0;">
+                                                    <small style="color: var(--text-secondary); font-size: 0.8rem; margin-top: var(--space-xs); display: block;">Must match new password</small>
                                                 </div>
                                             </div>
-                                            
-                                            <!-- Save Button - Bottom Right -->
-                                            <div style="display: flex; justify-content: flex-end;">
-                                                <button type="submit" name="simpan" class="add-to-cart-btn" style="width: auto; margin: 0; padding: var(--space-md) var(--space-xl);">
-                                                    <svg style="width: 16px; height: 16px; margin-right: var(--space-sm);" viewBox="0 0 24 24" fill="currentColor">
-                                                        <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
-                                                    </svg>
-                                                    Save Changes
-                                                </button>
-                                            </div>
+                                        </div>
                                         </form>
                                     </div>
                                 </div>
+                                
+                                <!-- Save Button - Bottom of Card -->
+                                <form method="POST" enctype="multipart/form-data" id="profile-form" style="margin-top: var(--space-xl); padding-top: var(--space-lg); border-top: 1px solid var(--glass-border);">
+                                    <input type="file" name="image" accept="image/*" style="display: none;" id="photo-input-submit">
+                                    <input type="hidden" name="username" id="username-hidden" value="<?php echo htmlspecialchars($username); ?>">
+                                    <input type="hidden" name="current_password" id="current-password-hidden">
+                                    <input type="hidden" name="new_password" id="new-password-hidden">
+                                    <input type="hidden" name="confirm_password" id="confirm-password-hidden">
+                                    <input type="hidden" name="simpan" value="1">
+                                    <button type="submit" class="add-to-cart-btn" id="save-btn" style="width: 100%; margin: 0; padding: var(--space-md) var(--space-xl); justify-content: center;">
+                                        <svg style="width: 16px; height: 16px; margin-right: var(--space-sm);" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
+                                        </svg>
+                                        Save Changes
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -426,12 +517,76 @@ if (isset($_POST['logout'])) {
 
         // Photo upload functionality
         const photoInput = document.getElementById('photo-input');
+        const photoInputSubmit = document.getElementById('photo-input-submit');
         const previewImage = document.getElementById('preview-image');
+        const usernameInput = document.getElementById('username-input');
+        const usernameHidden = document.getElementById('username-hidden');
+        const currentPasswordInput = document.getElementById('current-password-input');
+        const currentPasswordHidden = document.getElementById('current-password-hidden');
+        const newPasswordInput = document.getElementById('new-password-input');
+        const newPasswordHidden = document.getElementById('new-password-hidden');
+        const confirmPasswordInput = document.getElementById('confirm-password-input');
+        const confirmPasswordHidden = document.getElementById('confirm-password-hidden');
+
+        // Sync form inputs with hidden fields
+        if (usernameInput && usernameHidden) {
+            usernameInput.addEventListener('input', function() {
+                usernameHidden.value = this.value;
+            });
+        }
+
+        if (currentPasswordInput && currentPasswordHidden) {
+            currentPasswordInput.addEventListener('input', function() {
+                currentPasswordHidden.value = this.value;
+            });
+        }
+
+        if (newPasswordInput && newPasswordHidden) {
+            newPasswordInput.addEventListener('input', function() {
+                newPasswordHidden.value = this.value;
+            });
+        }
+
+        if (confirmPasswordInput && confirmPasswordHidden) {
+            confirmPasswordInput.addEventListener('input', function() {
+                confirmPasswordHidden.value = this.value;
+            });
+        }
+
+        // Password validation
+        if (newPasswordInput && confirmPasswordInput) {
+            function validatePasswords() {
+                const newPass = newPasswordInput.value;
+                const confirmPass = confirmPasswordInput.value;
+                
+                if (newPass.length > 0 && newPass.length < 6) {
+                    newPasswordInput.style.borderColor = 'var(--danger)';
+                } else {
+                    newPasswordInput.style.borderColor = '';
+                }
+                
+                if (confirmPass.length > 0 && newPass !== confirmPass) {
+                    confirmPasswordInput.style.borderColor = 'var(--danger)';
+                } else {
+                    confirmPasswordInput.style.borderColor = '';
+                }
+            }
+            
+            newPasswordInput.addEventListener('input', validatePasswords);
+            confirmPasswordInput.addEventListener('input', validatePasswords);
+        }
 
         if (photoInput && previewImage) {
             photoInput.addEventListener('change', function () {
                 const file = this.files[0];
                 if (file) {
+                    // Create a new DataTransfer to copy the file
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    if (photoInputSubmit) {
+                        photoInputSubmit.files = dataTransfer.files;
+                    }
+                    
                     const reader = new FileReader();
                     reader.onload = function (e) {
                         previewImage.src = e.target.result;
@@ -443,6 +598,65 @@ if (isset($_POST['logout'])) {
                     };
                     reader.readAsDataURL(file);
                 }
+            });
+        }
+
+        // Profile form submission
+        const profileForm = document.getElementById('profile-form');
+        const saveBtn = document.getElementById('save-btn');
+
+        if (profileForm) {
+            profileForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Disable button and show loading state
+                saveBtn.disabled = true;
+                const originalContent = saveBtn.innerHTML;
+                saveBtn.innerHTML = `
+                    <svg style="width: 16px; height: 16px; margin-right: var(--space-sm); animation: spin 1s linear infinite;" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/>
+                    </svg>
+                    Saving...
+                `;
+
+                // Create FormData from the form
+                const formData = new FormData(this);
+
+                // Send AJAX request
+                fetch('profile.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification(data.message, 'success');
+                        // Clear password fields after successful update
+                        if (currentPasswordInput) currentPasswordInput.value = '';
+                        if (newPasswordInput) newPasswordInput.value = '';
+                        if (confirmPasswordInput) confirmPasswordInput.value = '';
+                        if (currentPasswordHidden) currentPasswordHidden.value = '';
+                        if (newPasswordHidden) newPasswordHidden.value = '';
+                        if (confirmPasswordHidden) confirmPasswordHidden.value = '';
+                        
+                        // Update sidebar username if changed
+                        const sidebarUsername = document.querySelector('.user-name');
+                        if (sidebarUsername && usernameInput) {
+                            sidebarUsername.textContent = usernameInput.value;
+                        }
+                    } else {
+                        showNotification(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Profile update error:', error);
+                    showNotification('Network error. Please try again.', 'error');
+                })
+                .finally(() => {
+                    // Restore button state
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = originalContent;
+                });
             });
         }
 
@@ -552,6 +766,10 @@ if (isset($_POST['logout'])) {
             @keyframes fadeOut {
                 from { opacity: 1; transform: translateY(0); }
                 to { opacity: 0; transform: translateY(-20px); }
+            }
+            @keyframes spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
             }
             .notification {
                 position: fixed;
