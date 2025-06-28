@@ -190,7 +190,11 @@ if (isset($_POST['logout'])) {
 
                 <div class="nav-icon profile">
                     <a href="profile.php" aria-label="View user profile">
-                        <img src="image/profile white.svg" class="icon-img" alt="" width="20" height="20">
+                        <?php if ($foto): ?>
+                            <img src="image/<?php echo $foto; ?>" class="icon-img profile-avatar" alt="" width="44" height="44" style="border-radius: 50%; object-fit: cover; filter: none; width: 44px; height: 44px;">
+                        <?php else: ?>
+                            <img src="image/profile white.svg" class="icon-img" alt="" width="20" height="20">
+                        <?php endif; ?>
                     </a>
                 </div>
             </div>

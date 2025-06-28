@@ -12,6 +12,11 @@ if (!isset($_SESSION['loginbtn']) || $_SESSION['loginbtn'] == false) {
 
 $user_id = $_SESSION['user_id'];
 
+// Get user info for navbar
+$user_query = mysqli_query($con, "SELECT foto FROM `users` WHERE id = '$user_id'");
+$user_data = mysqli_fetch_assoc($user_query);
+$user_foto = $user_data ? $user_data['foto'] : null;
+
 if (isset($_POST['hapus'])) {
     $produk_id = $_POST['produk_id'];
     $delete_query = mysqli_query($con, "DELETE FROM `cart` WHERE produk_id = '$produk_id' AND user_id = '$user_id'");
@@ -96,7 +101,11 @@ if (isset($_POST['add_to_wishlist']) || isset($_POST['remove_from_wishlist'])) {
 
                 <div class="nav-icon profile">
                     <a href="profile.php" aria-label="View user profile">
-                        <img src="image/profile white.svg" class="icon-img" alt="" width="20" height="20">
+                        <?php if ($user_foto): ?>
+                            <img src="image/<?php echo $user_foto; ?>" class="icon-img profile-avatar" alt="" width="44" height="44" style="border-radius: 50%; object-fit: cover; filter: none; width: 44px; height: 44px;">
+                        <?php else: ?>
+                            <img src="image/profile white.svg" class="icon-img" alt="" width="20" height="20">
+                        <?php endif; ?>
                     </a>
                 </div>
             </div>
@@ -181,7 +190,7 @@ if (isset($_POST['add_to_wishlist']) || isset($_POST['remove_from_wishlist'])) {
                                         : $fetch_cart['harga'];
                                 $total_price += $price;
                                 ?>
-                                <article class="game-card cart-item-card">
+                                <article class="game-card cart-item-card" onclick="window.location.href='detail.php?produk_id=<?php echo $fetch_cart['produk_id']; ?>'" style="cursor: pointer;">
                                     <div class="cart-item-layout">
                                         <!-- Game cover - uses full height -->
                                         <div class="cart-item-image">
@@ -196,7 +205,7 @@ if (isset($_POST['add_to_wishlist']) || isset($_POST['remove_from_wishlist'])) {
                                             <div class="cart-item-top">
                                                 <form method="post" action="" class="remove-form">
                                                     <input type="hidden" name="produk_id" value="<?php echo $fetch_cart['produk_id']; ?>">
-                                                    <button class="remove-btn" name="hapus" aria-label="Remove <?php echo htmlspecialchars($fetch_cart['nama']); ?> from cart">
+                                                    <button class="remove-btn" name="hapus" aria-label="Remove <?php echo htmlspecialchars($fetch_cart['nama']); ?> from cart" onclick="event.stopPropagation();">
                                                         ×
                                                     </button>
                                                 </form>

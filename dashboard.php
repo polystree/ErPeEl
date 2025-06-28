@@ -12,6 +12,11 @@ if (!isset($_SESSION['loginbtn']) || $_SESSION['loginbtn'] == false) {
 
 $user_id = $_SESSION['user_id'];
 
+// Get user info for navbar
+$user_query = mysqli_query($con, "SELECT foto FROM `users` WHERE id = '$user_id'");
+$user_data = mysqli_fetch_assoc($user_query);
+$user_foto = $user_data ? $user_data['foto'] : null;
+
 // Check for payment success notification
 $payment_success = false;
 $order_id = null;
@@ -113,7 +118,11 @@ function generateStarRating($avg_rating) {
 
                 <div class="nav-icon profile">
                     <a href="profile.php" aria-label="View user profile">
-                        <img src="image/profile white.svg" class="icon-img" alt="" width="20" height="20">
+                        <?php if ($user_foto): ?>
+                            <img src="image/<?php echo $user_foto; ?>" class="icon-img profile-avatar" alt="" width="44" height="44" style="border-radius: 50%; object-fit: cover; filter: none; width: 44px; height: 44px;">
+                        <?php else: ?>
+                            <img src="image/profile white.svg" class="icon-img" alt="" width="20" height="20">
+                        <?php endif; ?>
                     </a>
                 </div>
             </div>
