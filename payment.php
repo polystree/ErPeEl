@@ -172,9 +172,9 @@ if (isset($_POST['payment_form'])) {
     </nav>
 
     <main class="main-content" role="main" aria-label="Payment section">
-        <div class="payment-layout" style="max-width: 1200px; margin: 0 auto; padding: 0 var(--space-lg); display: grid; grid-template-columns: 1fr 400px; gap: var(--space-2xl); align-items: start;">
+        <div class="payment-layout" style="max-width: 1200px; margin: 0 auto; padding: 0 var(--space-lg);">
             
-            <!-- Left Column: Order & Game Details -->
+            <!-- Full Width Content -->
             <div class="payment-main">
                 <!-- Breadcrumb -->
                 <div class="breadcrumb" style="margin-bottom: var(--space-xl);">  
@@ -189,31 +189,84 @@ if (isset($_POST['payment_form'])) {
                         <h2 class="section-title">Your Order (<?php echo $total_quantity; ?> items)</h2>
                     </div>
                     
-                    <div class="order-items-container">
-                        <?php foreach ($cart_items as $item): ?>
-                            <div class="game-card" style="cursor: default; transform: none; margin-bottom: var(--space-md);">
-                                <div class="game-info" style="padding: var(--space-lg);">
-                                    <div style="display: flex; gap: var(--space-lg); align-items: center;">
-                                        <img src="image/<?php echo $item['foto']; ?>" 
-                                             alt="<?php echo htmlspecialchars($item['nama']); ?>"
-                                             style="width: 80px; height: 106px; border-radius: var(--radius-md); object-fit: cover; flex-shrink: 0;">
-                                        
-                                        <div style="flex: 1; min-width: 0;">
-                                            <h3 class="game-title" style="margin-bottom: var(--space-xs);"><?php echo htmlspecialchars($item['nama']); ?></h3>
-                                            <p class="game-developer" style="margin-bottom: var(--space-sm);"><?php echo htmlspecialchars($item['pengembang']); ?></p>
-                                            <div class="game-price">
-                                                <?php if ($item['harga_diskon'] && $item['harga_diskon'] < $item['harga']): ?>
-                                                    <span class="original-price">$<?php echo number_format($item['harga'], 2); ?></span>
-                                                    <span class="discounted-price">$<?php echo number_format($item['harga_diskon'], 2); ?></span>
-                                                <?php else: ?>
-                                                    <span class="current-price">$<?php echo number_format($item['harga'], 2); ?></span>
-                                                <?php endif; ?>
+                    <!-- Order Items and Summary Side by Side -->
+                    <div style="display: grid; grid-template-columns: 1fr 400px; gap: var(--space-2xl); align-items: start;">
+                        <!-- Order Items List -->
+                        <div class="order-items-container">
+                            <?php foreach ($cart_items as $item): ?>
+                                <div class="game-card" style="cursor: default; transform: none; margin-bottom: var(--space-md);">
+                                    <div class="game-info" style="padding: var(--space-lg);">
+                                        <div style="display: flex; gap: var(--space-lg); align-items: center;">
+                                            <img src="image/<?php echo $item['foto']; ?>" 
+                                                 alt="<?php echo htmlspecialchars($item['nama']); ?>"
+                                                 style="width: 80px; height: 106px; border-radius: var(--radius-md); object-fit: cover; flex-shrink: 0;">
+                                            
+                                            <div style="flex: 1; min-width: 0;">
+                                                <h3 class="game-title" style="margin-bottom: var(--space-xs);"><?php echo htmlspecialchars($item['nama']); ?></h3>
+                                                <p class="game-developer" style="margin-bottom: var(--space-sm);"><?php echo htmlspecialchars($item['pengembang']); ?></p>
+                                                <div class="game-price">
+                                                    <?php if ($item['harga_diskon'] && $item['harga_diskon'] < $item['harga']): ?>
+                                                        <span class="original-price">$<?php echo number_format($item['harga'], 2); ?></span>
+                                                        <span class="discounted-price">$<?php echo number_format($item['harga_diskon'], 2); ?></span>
+                                                    <?php else: ?>
+                                                        <span class="current-price">$<?php echo number_format($item['harga'], 2); ?></span>
+                                                    <?php endif; ?>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+                            <?php endforeach; ?>
+                        </div>
+
+                        <!-- Order Summary (moved here) -->
+                        <div class="payment-sidebar" style="position: sticky; top: calc(var(--space-2xl) + var(--space-2xl)); margin-bottom: 20px;">
+                            <div class="game-card" style="cursor: default; transform: none;">
+                                <div class="game-info" style="padding: var(--space-xl);">
+                                    <h3 style="color: var(--text-primary); margin-bottom: var(--space-lg); font-size: 1.2rem;">Order Summary</h3>
+                                    
+                                    <div class="summary-line" style="display: flex; justify-content: space-between; margin-bottom: var(--space-sm);">
+                                        <span style="color: var(--text-secondary);">Subtotal (<?php echo $total_quantity; ?> items)</span>
+                                        <span style="color: var(--text-primary); font-weight: 500;">$<?php echo number_format($total_harga, 2); ?></span>
+                                    </div>
+                                    
+                                    <div class="summary-line" style="display: flex; justify-content: space-between; margin-bottom: var(--space-sm);">
+                                        <span style="color: var(--text-secondary);">Processing Fee</span>
+                                        <span style="color: var(--text-primary); font-weight: 500;">$2.99</span>
+                                    </div>
+                                    
+                                    <div class="summary-line" style="display: flex; justify-content: space-between; margin-bottom: var(--space-sm);">
+                                        <span style="color: var(--text-secondary);">Tax (11%)</span>
+                                        <span style="color: var(--text-primary); font-weight: 500;">$<?php echo number_format(($total_harga + 2.99) * 0.11, 2); ?></span>
+                                    </div>
+                                    
+                                    <div style="border-top: 1px solid var(--glass-border); padding-top: var(--space-lg); margin-bottom: var(--space-xl);">
+                                        <div class="summary-line" style="display: flex; justify-content: space-between;">
+                                            <span style="color: var(--text-primary); font-weight: 600; font-size: 1.1rem;">Total</span>
+                                            <span style="color: var(--primary); font-weight: 700; font-size: 1.2rem;">$<?php echo number_format(($total_harga + 2.99) * 1.11, 2); ?></span>
+                                        </div>
+                                    </div>
+                                    
+                                    <form action="payment.php" method="POST" id="payment-form">
+                                        <input type="hidden" name="payment_form" value="1">
+                                        
+                                        <button type="submit" class="add-to-cart-btn" style="width: 100%; margin-bottom: var(--space-lg); justify-content: center;">
+                                            <svg style="width: 16px; height: 16px; margin-right: var(--space-sm);" viewBox="0 0 24 24" fill="currentColor">
+                                                <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
+                                            </svg>
+                                            Complete Purchase
+                                        </button>
+                                    </form>
+                                    
+                                    <p style="color: var(--text-secondary); font-size: 0.85rem; text-align: center; line-height: 1.4;">
+                                        By continuing, you agree to our 
+                                        <a href="#" style="color: var(--primary); text-decoration: none;">Terms of Service</a> 
+                                        and 
+                                        <a href="#" style="color: var(--primary); text-decoration: none;">Privacy Policy</a>
+                                    </p>
+                                </div>
                             </div>
-                        <?php endforeach; ?>
+                        </div>
                     </div>
                 </section>
 
@@ -259,55 +312,6 @@ if (isset($_POST['payment_form'])) {
                         </div>
                     </div>
                 </section>
-            </div>
-
-            <!-- Right Column: Order Summary -->
-            <div class="payment-sidebar" style="position: sticky; top: calc(var(--nav-height) + var(--space-xl));">
-                <div class="game-card" style="cursor: default; transform: none;">
-                    <div class="game-info" style="padding: var(--space-xl);">
-                        <h3 style="color: var(--text-primary); margin-bottom: var(--space-lg); font-size: 1.2rem;">Order Summary</h3>
-                        
-                        <div class="summary-line" style="display: flex; justify-content: space-between; margin-bottom: var(--space-sm);">
-                            <span style="color: var(--text-secondary);">Subtotal (<?php echo $total_quantity; ?> items)</span>
-                            <span style="color: var(--text-primary); font-weight: 500;">$<?php echo number_format($total_harga, 2); ?></span>
-                        </div>
-                        
-                        <div class="summary-line" style="display: flex; justify-content: space-between; margin-bottom: var(--space-sm);">
-                            <span style="color: var(--text-secondary);">Processing Fee</span>
-                            <span style="color: var(--text-primary); font-weight: 500;">$2.99</span>
-                        </div>
-                        
-                        <div class="summary-line" style="display: flex; justify-content: space-between; margin-bottom: var(--space-sm);">
-                            <span style="color: var(--text-secondary);">Tax (11%)</span>
-                            <span style="color: var(--text-primary); font-weight: 500;">$<?php echo number_format(($total_harga + 2.99) * 0.11, 2); ?></span>
-                        </div>
-                        
-                        <div style="border-top: 1px solid var(--glass-border); padding-top: var(--space-lg); margin-bottom: var(--space-xl);">
-                            <div class="summary-line" style="display: flex; justify-content: space-between;">
-                                <span style="color: var(--text-primary); font-weight: 600; font-size: 1.1rem;">Total</span>
-                                <span style="color: var(--primary); font-weight: 700; font-size: 1.2rem;">$<?php echo number_format(($total_harga + 2.99) * 1.11, 2); ?></span>
-                            </div>
-                        </div>
-                        
-                        <form action="payment.php" method="POST" id="payment-form">
-                            <input type="hidden" name="payment_form" value="1">
-                            
-                            <button type="submit" class="add-to-cart-btn" style="width: 100%; margin-bottom: var(--space-lg); justify-content: center;">
-                                <svg style="width: 16px; height: 16px; margin-right: var(--space-sm);" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
-                                </svg>
-                                Complete Purchase
-                            </button>
-                        </form>
-                        
-                        <p style="color: var(--text-secondary); font-size: 0.85rem; text-align: center; line-height: 1.4;">
-                            By continuing, you agree to our 
-                            <a href="#" style="color: var(--primary); text-decoration: none;">Terms of Service</a> 
-                            and 
-                            <a href="#" style="color: var(--primary); text-decoration: none;">Privacy Policy</a>
-                        </p>
-                    </div>
-                </div>
             </div>
         </div>
     </main>
@@ -401,18 +405,17 @@ if (isset($_POST['payment_form'])) {
         /* Payment-specific responsive styles */
         @media (max-width: 768px) {
             .payment-layout {
-                grid-template-columns: 1fr !important;
-                gap: var(--space-lg) !important;
+                padding: 0 var(--space-md) !important;
+            }
+            
+            /* Stack order items and summary vertically on mobile */
+            div[style*="display: grid; grid-template-columns: 1fr 400px"] {
+                display: block !important;
             }
             
             .payment-sidebar {
                 position: static !important;
-                order: -1;
-            }
-            
-            .main-content {
-                padding-left: var(--space-md) !important;
-                padding-right: var(--space-md) !important;
+                margin-top: var(--space-lg) !important;
             }
             
             .breadcrumb {
@@ -435,6 +438,11 @@ if (isset($_POST['payment_form'])) {
                 width: 60px !important;
                 height: 80px !important;
                 align-self: flex-start !important;
+            }
+            
+            /* Ensure order summary is full width on small screens */
+            div[style*="display: grid; grid-template-columns: 1fr 400px"] {
+                display: block !important;
             }
         }
 
