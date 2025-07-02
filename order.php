@@ -9,15 +9,14 @@ require "session.php";
 $message = "";
 $user_id = $_SESSION['user_id'];
 
-$select_profile = mysqli_query($con, "SELECT username, email, alamat, foto FROM users WHERE id = '$user_id'") or die(mysqli_error($con));
+$select_profile = mysqli_query($con, "SELECT username, email, foto FROM users WHERE id = '$user_id'") or die(mysqli_error($con));
 if (mysqli_num_rows($select_profile) > 0) {
     $fetch_profile = mysqli_fetch_assoc($select_profile);
     $username = $fetch_profile['username'];
     $email = $fetch_profile['email'];
-    $alamat = $fetch_profile['alamat'];
     $foto = $fetch_profile['foto'];
 } else {
-    $username = $email = $alamat = $foto = "";
+    $username = $email = $foto = "";
 }
 
 if (isset($_POST['cancel_order'])) {
@@ -33,30 +32,13 @@ if (isset($_POST['cancel_order'])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['status'])) {
-    $order_id = $_POST['order_id'];
-    $new_status = $_POST['status'];
-
-    $status_map = [
-        'Dikemas' => 1,
-        'Dikirim' => 2,
-        'Ulasan' => 3,
-        'Selesai' => 4
-    ];
-
-    if (isset($status_map[$new_status])) {
-        $status_value = $status_map[$new_status];
-        $stmt = $con->prepare("UPDATE orders SET status_order = ?, updated_at = NOW() WHERE id = ?");
-        $stmt->bind_param("ii", $status_value, $order_id);
-
-        if ($stmt->execute()) {
-        } 
-        $stmt->close();
-    } 
+    // Status update functionality disabled for basic orders table
+    // Would need to add status_order column to orders table to enable this feature
 }
 
 $query = "SELECT o.id AS order_id, o.created_at AS tanggal_pesanan, oi.quantity AS jumlah, oi.price AS harga_per_unit,
-                 p.nama AS nama_produk, p.foto AS gambar_produk, o.total_amount AS total_harga, o.ongkir AS ongkos_kirim,
-                 u.username AS user_name, u.alamat AS user_alamat, o.status_order, u.id AS user_id
+                 p.nama AS nama_produk, p.foto AS gambar_produk, o.total AS total_harga,
+                 u.username AS user_name, u.id AS user_id
           FROM orders o
           JOIN order_items oi ON o.id = oi.order_id
           JOIN produk p ON oi.produk_id = p.id
@@ -75,177 +57,239 @@ if ($result && mysqli_num_rows($result) > 0) {
 ?>
 
 <!DOCTYPE html>
-<html lang="id">
-
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detail Pesanan</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="icon" href="image/favicon.png" type="image/x-icon">
+    <title>Order Management - Vault Digital Store</title>
     <link rel="stylesheet" href="order.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="image/favicon.png">
 </head>
-
 <body>
-    <nav class="navbar">
+    <!-- Navigation -->
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
         <div class="upper-nav">
-            <a href="admin.php" class="nav-link">Kelola Buku</a>
             <div class="logo">
-                <a href="#"> <img src="image/logo white.png" alt="Logo"> </a>
+                <a href="dashboard.php" aria-label="Back to home">Vault</a>
             </div>
-            <a href="order.php" class="nav-link">Order Manajemen</a>
+            
+            <button class="mobile-menu-toggle" aria-label="Toggle mobile menu" aria-expanded="false" onclick="toggleMobileMenu()">
+                <span class="hamburger-icon">☰</span>
+            </button>
+
+            <div class="menu" role="menubar" id="mobile-menu">
+                <a href="admin.php" class="menu-item" role="menuitem">Manage Games</a>
+                <a href="order.php" class="menu-item active" role="menuitem">Order Management</a>
+            </div>
+
+            <div class="search-bar" role="search">
+                <form method="GET" action="search.php">
+                    <input type="text" name="query" placeholder="Search Games" class="search-input" aria-label="Enter game search keywords">
+                    <button type="submit" class="search-icon" aria-label="Start search">
+                        <img src="image/search-btn.svg" class="search-img" alt="" width="16" height="16">
+                    </button>
+                </form>
+            </div>
+
+            <div class="nav-icons">
+                <div class="nav-icon">
+                    <a href="cart.php" aria-label="View shopping cart">
+                        <img src="image/cart-btn.svg" class="icon-img" alt="" width="20" height="20">
+                    </a>
+                </div>
+
+                <div class="nav-icon profile">
+                    <a href="profile.php" aria-label="View user profile">
+                        <?php if (!empty($foto) && file_exists("image/" . $foto)): ?>
+                            <img src="image/<?php echo htmlspecialchars($foto); ?>" class="icon-img profile-avatar" alt="" width="44" height="44" style="border-radius: 50%; object-fit: cover; filter: none; width: 44px; height: 44px;">
+                        <?php else: ?>
+                            <img src="image/profile white.svg" class="icon-img" alt="" width="20" height="20">
+                        <?php endif; ?>
+                    </a>
+                </div>
+            </div>
         </div>
     </nav>
 
-    <div class="order-container">
-        <?php if (!empty($order_details)) { ?>
-            <?php foreach ($order_details as $order_id => $details) { ?>
-                <div class="order-box"> 
-                    <div class="order-header">
-                        <h2 id="order-status">
-                            <?php
-                            switch ($details[0]['status_order']) {
-                                case 1:
-                                    echo "Pesanan Dikemas";
-                                    break;
-                                case 2:
-                                    echo "Pesanan Dikirim";
-                                    break;
-                                case 3:
-                                    echo "Menunggu Ulasan";
-                                    break;
-                                case 4:
-                                    echo "Selesai";
-                                    break;
-                                default:
-                                    echo "Status Tidak Dikenal";
-                                    break;
-                            }
-                            ?>
-                        </h2>
-                        <div class="button-group">
-                            <?php
-                            if ($details[0]['status_order'] <= 3) {
-                            ?>
-                                <div class="status-dropdown">
-                                    <button class="button dropdown-toggle"
-                                        id="dropdown-toggle-<?php echo $order_id; ?>">Status</button>
-                                    <div class="dropdown-menu" id="dropdown-menu-<?php echo $order_id; ?>">
-                                        <form action="" method="POST">
-                                            <button type="submit" name="status" value="Dikemas"
-                                                class="dropdown-item">Dikemas</button>
-                                            <button type="submit" name="status" value="Dikirim"
-                                                class="dropdown-item">Dikirim</button>
-                                            <button type="submit" name="status" value="Ulasan"
-                                                class="dropdown-item">Menunggu Ulasan</button>
-                                            <button type="submit" name="status" value="Selesai"
-                                                class="dropdown-item">Selesai</button>
-                                            <input type="hidden" name="order_id" value="<?php echo $order_id; ?>">
-                                        </form>
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="page-title">Order Management</h1>
+            <p class="page-subtitle">Manage all customer orders and delivery status</p>
+        </div>
+
+        <div class="order-container">
+            <?php if (!empty($order_details)) { ?>
+                <?php foreach ($order_details as $order_id => $details) { ?>
+                    <div class="order-card"> 
+                        <div class="order-header">
+                            <div class="order-status-info">
+                                <h3 class="order-id">Order #<?php echo $order_id; ?></h3>
+                                <span class="order-status status-1">
+                                    Processing
+                                </span>
+                            </div>
+                            <div class="order-actions">
+                                <!-- Status update functionality disabled for basic orders table -->
+                                <span class="text-muted">Status management requires database upgrade</span>
+                            </div>
+                        </div>
+
+                        <div class="order-info">
+                            <div class="order-meta">
+                                <span class="order-date">
+                                    <svg viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M19,3H18V1H16V3H8V1H6V3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M19,19H5V8H19V19Z"/>
+                                    </svg>
+                                    <?php echo date("M d, Y • H:i", strtotime($details[0]['tanggal_pesanan'])); ?>
+                                </span>
+                                <span class="customer-name">
+                                    <svg viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/>
+                                    </svg>
+                                    <?php echo htmlspecialchars($details[0]['user_name']); ?>
+                                </span>
+                            </div>
+                        </div>
+
+                    <div class="order-products">
+                        <h4 class="section-title">Order Items</h4>
+                        <?php foreach ($details as $detail) { ?>
+                            <div class="product-item">
+                                <div class="product-image">
+                                    <img src="image/<?php echo htmlspecialchars($detail['gambar_produk']); ?>" alt="<?php echo htmlspecialchars($detail['nama_produk']); ?>">
+                                </div>
+                                <div class="product-details">
+                                    <h5 class="product-name"><?php echo htmlspecialchars($detail['nama_produk']); ?></h5>
+                                    <div class="product-quantity">
+                                        <span class="qty-label">Quantity:</span>
+                                        <span class="qty-value"><?php echo $detail['jumlah']; ?>x</span>
+                                        <span class="unit-price">$<?php echo number_format($detail['harga_per_unit'], 2); ?></span>
                                     </div>
                                 </div>
-                            <?php
-                            }
-                            ?>
-                            <form action="" method="POST">
-                                <?php if ($details[0]['status_order'] < 3) { ?>
-                                    <button type="submit" name="cancel_order" class="button delete">Batalkan Pesanan</button>
-                                    <input type="hidden" name="order_id" value="<?php echo $order_id; ?>">
-                                <?php } ?>
-                            </form>
-                        </div>
-                    </div>
-
-                    <div class="order-info">
-                        <p>Tanggal Pembelian: <span
-                                class="purchase-date"><?php echo date("d F Y, H:i", strtotime($details[0]['tanggal_pesanan'])); ?></span>
-                        </p>
-                    </div>
-
-                    <div class="order-product">
-                        <?php foreach ($details as $detail) { ?>
-                            <div class="product-detail">
-                                <div class="product-image">
-                                    <img src="image/<?php echo $detail['gambar_produk']; ?>" alt="Gambar Produk">
-                                </div>
-                                <div class="product-info">
-                                    <p><?php echo $detail['nama_produk']; ?></p>
-                                    <p><?php echo $detail['jumlah']; ?>x
-                                        Rp<?php echo number_format($detail['harga_per_unit'], 0, ',', '.'); ?></p>
-                                </div>
-                                <div class="product-price">
-                                    <p>Total Harga</p>
-                                    <p class="total-price">
-                                        Rp<?php echo number_format($detail['jumlah'] * $detail['harga_per_unit'], 0, ',', '.'); ?>
-                                    </p>
+                                <div class="product-total">
+                                    <span class="total-label">Total</span>
+                                    <span class="total-amount">$<?php echo number_format($detail['jumlah'] * $detail['harga_per_unit'], 2); ?></span>
                                 </div>
                             </div>
                         <?php } ?>
                     </div>
 
-                    <div class="shipping-info">
-                        <h3>Informasi Pengiriman</h3>
-                        <div class="shipping-details">
-                            <div class="shipping-row">
-                                <strong>Nama:</strong> <span><strong><?php echo $details[0]['user_name']; ?></strong></span>
+                    <div class="shipping-section">
+                        <h4 class="section-title">Shipping Information</h4>
+                        <div class="shipping-card">
+                            <div class="shipping-item">
+                                <span class="shipping-label">
+                                    <svg viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/>
+                                    </svg>
+                                    Customer Name
+                                </span>
+                                <span class="shipping-value"><?php echo htmlspecialchars($details[0]['user_name']); ?></span>
                             </div>
-                            <div class="shipping-row">
-                                <strong>Alamat:</strong>
-                                <div class="address-details">
-                                    <p><?php echo nl2br($details[0]['user_alamat']); ?></p>
-                                </div>
+                            <div class="shipping-item">
+                                <span class="shipping-label">
+                                    <svg viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12,11.5A2.5,2.5 0 0,1 9.5,9A2.5,2.5 0 0,1 12,6.5A2.5,2.5 0 0,1 14.5,9A2.5,2.5 0 0,1 12,11.5M12,2A7,7 0 0,0 5,9C5,14.25 12,22 12,22C12,22 19,14.25 19,9A7,7 0 0,0 12,2Z"/>
+                                    </svg>
+                                    Delivery Address
+                                </span>
+                                <span class="shipping-value">Address information requires profile update</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="payment-details">
-                        <h3>Detail Pembayaran</h3>
-                        <div class="payment-row">
-                            <span>Total Harga (<?php echo count($details); ?> Barang):</span>
-                            <span>Rp<?php
-                            $total_item_price = 0;
-                            foreach ($details as $detail) {
-                                $total_item_price += ($detail['jumlah'] * $detail['harga_per_unit']);
-                            }
-                            echo number_format($total_item_price, 0, ',', '.');
-                            ?></span>
-                        </div>
-                        <div class="payment-row">
-                            <span>Biaya Pengiriman:</span>
-                            <span>Rp<?php echo number_format($details[0]['ongkos_kirim'], 0, ',', '.'); ?></span>
-                        </div>
-                        <div class="payment-row">
-                            <span>Asuransi Pengiriman:</span>
-                            <span>Rp4,000</span>
-                        </div>
-                        <div class="payment-row">
-                            <span>Biaya Layanan Aplikasi:</span>
-                            <span>Rp1,000</span>
-                        </div>
-                        <div class="payment-total">
-                            <span>Total Belanja:</span>
-                            <span>Rp<?php echo number_format($details[0]['total_harga'], 0, ',', '.'); ?></span>
+                    <div class="payment-section">
+                        <h4 class="section-title">Payment Summary</h4>
+                        <div class="payment-card">
+                            <div class="payment-item">
+                                <span>Subtotal (<?php echo count($details); ?> items)</span>
+                                <span>$<?php
+                                $total_item_price = 0;
+                                foreach ($details as $detail) {
+                                    $total_item_price += ($detail['jumlah'] * $detail['harga_per_unit']);
+                                }
+                                echo number_format($total_item_price, 2);
+                                ?></span>
+                            </div>
+                            <div class="payment-item">
+                                <span>Processing Fee</span>
+                                <span>$2.99</span>
+                            </div>
+                            <div class="payment-total">
+                                <span>Total Amount</span>
+                                <span>$<?php echo number_format($details[0]['total_harga'], 2); ?></span>
+                            </div>
                         </div>
                     </div>
                 </div> 
             <?php } ?>
         <?php } else { ?>
-            <p>Tidak ada pesanan ditemukan.</p>
+            <div class="empty-state">
+                <div class="empty-state-icon">📦</div>
+                <h3>No Orders Found</h3>
+                <p>There are currently no orders to manage.</p>
+            </div>
         <?php } ?>
-    </div>
+        </div>
+    </main>
 
-    <footer>
-        <p>&copy; Kelompok 1 | PPW | <a href="#" class="privacy-policy">Kebijakan Privasi</a></p>
+    <!-- Footer -->
+    <footer role="contentinfo">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h3>Vault</h3>
+                <p>Your ultimate destination for digital games</p>
+            </div>
+            <div class="footer-links">
+                <div class="footer-section">
+                    <h4>Support</h4>
+                    <ul>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                        <li><a href="#">Community</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="#" class="privacy-policy">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                        <li><a href="#">Refund Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Vault | Developed by Group 4 RPL</p>
+            </div>
+        </div>
     </footer>
 
     <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            const toggle = document.querySelector('.mobile-menu-toggle');
+            
+            if (menu.style.display === 'flex') {
+                menu.style.display = 'none';
+                toggle.setAttribute('aria-expanded', 'false');
+            } else {
+                menu.style.display = 'flex';
+                toggle.setAttribute('aria-expanded', 'true');
+            }
+        }
+
         document.addEventListener('click', function (e) {
             const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
             dropdownToggles.forEach(function (toggle) {
                 const dropdownId = toggle.id.replace('dropdown-toggle-', '');
                 const dropdownMenu = document.getElementById('dropdown-menu-' + dropdownId);
 
-                if (e.target === toggle) {
+                if (e.target === toggle || toggle.contains(e.target)) {
                     dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
                 } else {
                     dropdownMenu.style.display = 'none';

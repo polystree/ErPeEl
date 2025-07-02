@@ -96,6 +96,13 @@ if (isset($_POST['add_to_wishlist']) || isset($_POST['remove_from_wishlist'])) {
                 <div class="nav-icon">
                     <a href="cart.php" aria-label="View shopping cart">
                         <img src="image/cart-btn.svg" class="icon-img" alt="" width="20" height="20">
+                        <?php
+                        $cart_count_query = mysqli_query($con, "SELECT COUNT(*) as count FROM `cart` WHERE user_id = '$user_id'");
+                        $cart_count = mysqli_fetch_assoc($cart_count_query)['count'];
+                        if ($cart_count > 0) {
+                            echo '<span class="cart-badge">' . ($cart_count > 99 ? '99+' : $cart_count) . '</span>';
+                        }
+                        ?>
                     </a>
                 </div>
 

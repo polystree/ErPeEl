@@ -482,63 +482,42 @@ while ($wishlist_row = mysqli_fetch_assoc($wishlist_query)) {
 
         // Show wishlist notification
         function showWishlistNotification(message) {
-            const notification = document.getElementById('wishlist-notification');
-            const messageSpan = notification.querySelector('.wishlist-message');
-            
-            messageSpan.textContent = message;
-            notification.classList.add('show');
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
+            showNotification(message, 'success');
         }
 
-        // Show general notification
+        // Simple notification system (matches dashboard)
         function showNotification(message, type = 'success') {
-            // Create notification element if it doesn't exist
-            let notification = document.getElementById('general-notification');
-            if (!notification) {
-                notification = document.createElement('div');
-                notification.id = 'general-notification';
-                notification.className = 'wishlist-notification';
-                notification.innerHTML = `
-                    <svg class="heart-icon" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <span class="wishlist-message"></span>
-                `;
-                document.body.appendChild(notification);
-            }
+            const notification = document.getElementById('wishlist-notification');
+            const messageEl = notification.querySelector('.wishlist-message');
             
-            const messageSpan = notification.querySelector('.wishlist-message');
-            messageSpan.textContent = message;
-            notification.classList.add('show');
+            messageEl.textContent = message;
+            notification.className = `wishlist-notification ${type} show`;
             
             setTimeout(() => {
                 notification.classList.remove('show');
             }, 3000);
         }
 
-        // Update cart badge
+        // Update cart count in navbar (matches dashboard)
         function updateCartBadge() {
-            fetch('ajax_get_cart.php')
+            fetch('ajax_handler.php?action=get_cart_count')
             .then(response => response.json())
             .then(data => {
-                const cartBadge = document.querySelector('.cart-badge');
-                const cartIcon = document.querySelector('.nav-icon a[href="cart.php"]');
-                
-                if (data.count > 0) {
-                    if (cartBadge) {
-                        cartBadge.textContent = data.count > 99 ? '99+' : data.count;
-                    } else {
-                        const badge = document.createElement('span');
-                        badge.className = 'cart-badge';
-                        badge.textContent = data.count > 99 ? '99+' : data.count;
-                        cartIcon.appendChild(badge);
-                    }
-                } else {
-                    if (cartBadge) {
-                        cartBadge.remove();
+                if (data.success) {
+                    const cartIcon = document.querySelector('.nav-icon a[href="cart.php"]');
+                    if (cartIcon) {
+                        // Remove existing badge
+                        const existingBadge = cartIcon.querySelector('.cart-badge');
+                        if (existingBadge) existingBadge.remove();
+                        
+                        // Add new badge if count > 0
+                        if (data.count > 0) {
+                            const badge = document.createElement('span');
+                            badge.className = 'cart-badge';
+                            badge.textContent = data.count > 99 ? '99+' : data.count;
+                            cartIcon.style.position = 'relative';
+                            cartIcon.appendChild(badge);
+                        }
                     }
                 }
             })

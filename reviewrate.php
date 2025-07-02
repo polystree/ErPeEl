@@ -15,16 +15,15 @@ $message = "";
 $user_id = $_SESSION['user_id'];
 
 
-$select_profile = mysqli_query($con, "SELECT username, email, alamat, foto FROM users WHERE id = '$user_id'") or die(mysqli_error($con));
+$select_profile = mysqli_query($con, "SELECT username, email, foto FROM users WHERE id = '$user_id'") or die(mysqli_error($con));
 
 if (mysqli_num_rows($select_profile) > 0) {
   $fetch_profile = mysqli_fetch_assoc($select_profile);
   $username = $fetch_profile['username'];
   $email = $fetch_profile['email'];
-  $alamat = $fetch_profile['alamat'];
   $foto = $fetch_profile['foto'];
 } else {
-  $username = $email = $alamat = $foto = "";
+  $username = $email = $foto = "";
 }
 
 
@@ -41,11 +40,9 @@ $query = "
         p.id AS produk_id,
         p.nama AS nama_produk,
         p.foto AS gambar_produk,
-        p.pengarang AS nama_pengarang,
-        o.total_amount AS total_harga,
-        o.ongkir AS ongkos_kirim,
-        u.username AS user_name,
-        u.alamat AS user_alamat
+        p.pengembang AS nama_pengarang,
+        o.total AS total_harga,
+        u.username AS user_name
     FROM 
         orders o
     JOIN 
