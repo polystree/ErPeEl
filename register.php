@@ -38,9 +38,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['regisbtn'])) {
         $passwordError = 'Password tidak cocok, silahkan ulangi.';
     } else {
         
-        $sqlInsert = "INSERT INTO users (username, email, password) VALUES (?, ?, ?)";
+        $sqlInsert = "INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)";
         $stmtInsert = $con->prepare($sqlInsert);
-        $stmtInsert->bind_param('sss', $username, $email, $password);
+        $role = 'user';
+        $stmtInsert->bind_param('ssss', $username, $email, $password, $role);
         
         if ($stmtInsert->execute()) {
             $successMessage = 'Akun berhasil di registrasi, silahkan login.';

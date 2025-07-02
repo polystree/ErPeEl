@@ -6,6 +6,11 @@ error_reporting(E_ALL);
 require "koneksi.php";
 require "session.php";
 
+if ($_SESSION['role'] !== 'admin') {
+    header('Location: dashboard.php');
+    exit();
+}
+
 $message = "";
 $user_id = $_SESSION['user_id'];
 
@@ -36,13 +41,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['status'])) {
     // Would need to add status_order column to orders table to enable this feature
 }
 
-$query = "SELECT o.id AS order_id, o.created_at AS tanggal_pesanan, oi.quantity AS jumlah, oi.price AS harga_per_unit,
+$query = "SELECT o.id AS order_id, o.created_at AS tanggal_pesanan, COUNT(oi.produk_id) AS jumlah, oi.price AS harga_per_unit,
                  p.nama AS nama_produk, p.foto AS gambar_produk, o.total AS total_harga,
                  u.username AS user_name, u.id AS user_id
           FROM orders o
           JOIN order_items oi ON o.id = oi.order_id
           JOIN produk p ON oi.produk_id = p.id
           JOIN users u ON o.user_id = u.id
+          GROUP BY o.id, oi.produk_id, p.nama, p.foto, u.username, u.id, o.created_at, o.total, oi.price
           ORDER BY o.created_at DESC";
 $result = mysqli_query($con, $query);
 $order_details = [];
