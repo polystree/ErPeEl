@@ -2,6 +2,11 @@
 require "koneksi.php";
 require "session.php";
 
+if ($_SESSION['role'] !== 'admin') {
+    header('Location: dashboard.php');
+    exit();
+}
+
 // Handle logout
 if (isset($_POST['logout-btn'])) {
     session_unset();

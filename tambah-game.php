@@ -2,6 +2,11 @@
 require "koneksi.php"; 
 require "session.php";
 
+if ($_SESSION['role'] !== 'admin') {
+    header('Location: dashboard.php');
+    exit();
+}
+
 // Get user info
 $user_id = $_SESSION['user_id'];
 $user_query = mysqli_query($con, "SELECT foto FROM `users` WHERE id = '$user_id'");
