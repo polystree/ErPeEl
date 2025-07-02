@@ -249,8 +249,7 @@
     <footer role="contentinfo" style="background: var(--bg-glass); border-top: 1px solid var(--glass-border); padding: var(--space-lg) 0; text-align: center;">
         <div style="max-width: 1200px; margin: 0 auto; padding: 0 var(--space-lg);">
             <p style="color: var(--text-secondary); font-size: 0.9rem;">
-                &copy; 2025 Vault | Developed by Group 4 RPL | 
-                <a href="#" style="color: var(--primary); text-decoration: none;">Privacy Policy</a>
+                &copy; 2025 Vault | Developed by Group 4 RPL
             </p>
         </div>
     </footer>

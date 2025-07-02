@@ -2,355 +2,450 @@
 require "session.php";
 require "koneksi.php";
 
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Pragma: no-cache");
+
 if (!isset($_SESSION['loginbtn']) || $_SESSION['loginbtn'] == false) {
     header("Location: login.php");
     exit();
 }
-$message = "";
+
 $user_id = $_SESSION['user_id'];
-if (isset($_POST['produk_id'])) {
-    $produk_id = intval($_POST['produk_id']);
-   
+
+// Get user info for navbar
+$user_query = mysqli_query($con, "SELECT foto FROM `users` WHERE id = '$user_id'");
+$user_data = mysqli_fetch_assoc($user_query);
+$user_foto = $user_data ? $user_data['foto'] : null;
+
+// Rating function
+function getAverageRating($con, $produk_id) {
+    $rating_query = mysqli_query($con, "SELECT AVG(rating) as avg_rating, COUNT(*) as total_reviews FROM rating WHERE produk_id = '$produk_id'");
+    $rating_data = mysqli_fetch_assoc($rating_query);
+    return [
+        'average' => $rating_data['avg_rating'] ? round($rating_data['avg_rating'], 1) : 0,
+        'total' => $rating_data['total_reviews']
+    ];
 }
-header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
-header("Pragma: no-cache");
-$wishlist_ids = [];
-$get_wishlist = mysqli_query($con, "SELECT produk_id FROM wishlist WHERE user_id = '$user_id'");
-while ($row = mysqli_fetch_assoc($get_wishlist)) {
-    $wishlist_ids[] = $row['produk_id'];
-}
 
-
-if (isset($_POST['toggle_wishlist']) && isset($_POST['produk_id'])) {
-    $produk_id = mysqli_real_escape_string($con, $_POST['produk_id']);
-
+function generateStarRating($avg_rating) {
+    $rounded_rating = round($avg_rating);
+    $full_stars = $rounded_rating;
+    $empty_stars = 5 - $full_stars;
     
-    $check_wishlist = mysqli_query($con, "SELECT * FROM wishlist WHERE produk_id = '$produk_id' AND user_id = '$user_id'");
-
-    if (mysqli_num_rows($check_wishlist) > 0) {
-        
-        $delete_wishlist = mysqli_query($con, "DELETE FROM wishlist WHERE produk_id = '$produk_id' AND user_id = '$user_id'");
-        if (!$delete_wishlist) {
-            http_response_code(500); 
-            echo "Error removing item from wishlist.";
-            exit();
-        }
-    } else {
-        
-        $add_wishlist = mysqli_query($con, "INSERT INTO wishlist (produk_id, user_id) VALUES ('$produk_id', '$user_id')");
-        if (!$add_wishlist) {
-            http_response_code(500); 
-            echo "Error adding item to wishlist.";
-            exit();
-        }
-    }
-    http_response_code(200); 
-    echo "Wishlist updated successfully.";
-    exit();
+    return str_repeat('★', $full_stars) . 
+           str_repeat('☆', $empty_stars);
 }
+
+// Sorting options for promo page
+$sort_by = isset($_GET['sort_by']) ? $_GET['sort_by'] : 'discount_desc';
+
+// Order by mapping for promo page
+$order_by = "p.id DESC"; // Default
+switch ($sort_by) {
+    case 'discount_desc':
+        $order_by = "((p.harga - p.harga_diskon) / p.harga) DESC";
+        break;
+    case 'discount_asc':
+        $order_by = "((p.harga - p.harga_diskon) / p.harga) ASC";
+        break;
+    case 'terlaris':
+        $order_by = "(SELECT COUNT(*) FROM rating r WHERE r.produk_id = p.id) DESC";
+        break;
+    case 'harga_terendah':
+        $order_by = "p.harga_diskon ASC";
+        break;
+    case 'harga_tertinggi':
+        $order_by = "p.harga_diskon DESC";
+        break;
+}
+
+// Query for promo games - only those with valid discounts
+$sql = "SELECT p.* FROM produk p WHERE p.harga_diskon IS NOT NULL AND p.harga_diskon > 0 AND p.harga_diskon < p.harga ORDER BY $order_by LIMIT 20";
+$select_produk = mysqli_query($con, $sql) or die('Query failed: ' . mysqli_error($con));
+
+// Get cart and wishlist data for current user
+$cart_query = mysqli_query($con, "SELECT produk_id FROM `cart` WHERE user_id = '$user_id'");
+$cart_items = [];
+while ($cart_row = mysqli_fetch_assoc($cart_query)) {
+    $cart_items[] = $cart_row['produk_id'];
+}
+
+$wishlist_query = mysqli_query($con, "SELECT produk_id FROM `wishlist` WHERE user_id = '$user_id'");
+$wishlist_ids = [];
+while ($wishlist_row = mysqli_fetch_assoc($wishlist_query)) {
+    $wishlist_ids[] = $wishlist_row['produk_id'];
+}
+
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buku Promo</title>
+    <meta name="description" content="Special offers and discounted games at Vault - Your digital game store">
+    <title>Special Offers - Vault Digital Store</title>
     <link rel="icon" type="image/x-icon" href="image/favicon.png">
-    <link rel="stylesheet" href="semua.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="search.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 
 <body>
-
-<nav class="navbar">
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
         <div class="upper-nav">
             <div class="logo">
-                <a href="dashboard.php"> <img src="image/logo white.png" alt="Logo"> </a>
+                <a href="dashboard.php" aria-label="Back to home">Vault</a>
             </div>
+            
+            <button class="mobile-menu-toggle" aria-label="Toggle mobile menu" aria-expanded="false" onclick="toggleMobileMenu()">
+                <span class="hamburger-icon">☰</span>
+            </button>
 
-            <div class="menu">
+            <div class="menu" role="menubar" id="mobile-menu">
+                <a href="semua.php" class="menu-item" role="menuitem">All Games</a>
                 <div class="dropdown">
-
-                    <a href="semua.php" class="menu-item dropdown-toggle">Semua Buku</a>
-                </div>
-                <div class="dropdown">
-                    <a href="#" class="menu-item dropdown-toggle">Kategori</a>
-                    <div class="dropdown-menu">
+                    <a href="#" class="menu-item dropdown-toggle" role="menuitem" aria-haspopup="true" aria-expanded="false">Categories</a>
+                    <div class="dropdown-menu" role="menu">
                         <div class="dropdown-section">
-                            <h4>Fiksi</h4>
-                            <ul>
-                                <li><a href="kategori.php?kategori=1">Novel</a></li>
-                                <li><a href="kategori.php?kategori=2">Cerita Pendek</a></li>
-                                <li><a href="kategori.php?kategori=3">Komik</a></li>
+                            <h4>Action</h4>
+                            <ul role="none">
+                                <li><a href="kategori.php?kategori=1" role="menuitem">FPS Shooters</a></li>
+                                <li><a href="kategori.php?kategori=2" role="menuitem">Action RPG</a></li>
+                                <li><a href="kategori.php?kategori=3" role="menuitem">Battle Royale</a></li>
                             </ul>
                         </div>
                         <div class="dropdown-section">
-                            <h4>Non-Fiksi</h4>
-                            <ul>
-                                <li><a href="kategori.php?kategori=4">Biografi</a></li>
-                                <li><a href="kategori.php?kategori=5">Sejarah</a></li>
-                                <li><a href="kategori.php?kategori=6">Psikologi</a></li>
+                            <h4>Adventure</h4>
+                            <ul role="none">
+                                <li><a href="kategori.php?kategori=4" role="menuitem">Platformer</a></li>
+                                <li><a href="kategori.php?kategori=5" role="menuitem">Strategy</a></li>
+                                <li><a href="kategori.php?kategori=6" role="menuitem">City Builder</a></li>
                             </ul>
                         </div>
                         <div class="dropdown-section">
-                            <h4>Sains & Teknologi</h4>
-                            <ul>
-                                <li><a href="kategori.php?kategori=7">Ilmu Komputer</a></li>
-                                <li><a href="kategori.php?kategori=8">Fisika</a></li>
-                                <li><a href="kategori.php?kategori=9">Biologi</a></li>
-                            </ul>
-                        </div>
-                        <div class="dropdown-section">
-                            <h4>Bisnis & Ekonomi</h4>
-                            <ul>
-                                <li><a href="kategori.php?kategori=10">Kewirausahaan</a></li>
-                                <li><a href="kategori.php?kategori=11">Investasi</a></li>
-                                <li><a href="kategori.php?kategori=12">Manajemen</a></li>
-                            </ul>
-                        </div>
-                        <div class="dropdown-section">
-                            <h4>Pengembangan Diri</h4>
-                            <ul>
-                                <li><a href="kategori.php?kategori=Motivasi">Motivasi</a></li>
-                                <li><a href="kategori.php?kategori=Kesehatan">Kesehatan</a></li>
-                                <li><a href="kategori.php?kategori=Spiritual">Spiritual</a></li>
+                            <h4>Strategy</h4>
+                            <ul role="none">
+                                <li><a href="kategori.php?kategori=7" role="menuitem">Turn-Based</a></li>
+                                <li><a href="kategori.php?kategori=8" role="menuitem">Life Simulation</a></li>
                             </ul>
                         </div>
                     </div>
                 </div>
+                <a href="baru.php" class="menu-item" role="menuitem">New Releases</a>
+                <a href="promo.php" class="menu-item active" role="menuitem">Special Offers</a>
             </div>
 
-            <div class="search-bar">
-                <input type="text" placeholder="Cari Buku" class="search-input">
-                <button type="submit" class="search-icon">
-                    <img src="image/search-btn.svg" class="search-img" alt="Search Icon">
-                </button>
+            <div class="search-bar" role="search">
+                <form method="GET" action="search.php">
+                    <input type="text" name="query" placeholder="Search Games" class="search-input" aria-label="Enter game search keywords">
+                    <button type="submit" class="search-icon" aria-label="Start search">
+                        <img src="image/search-btn.svg" class="search-img" alt="" width="16" height="16">
+                    </button>
+                </form>
             </div>
 
             <div class="nav-icons">
                 <div class="nav-icon">
-                    <a href="cart.php">
-                        <img src="image/cart-btn.svg" class="icon-img white-icon" alt="Cart Icon">
-                        <img src="image/cart-btno.svg" class="icon-img orange-icon" alt="Cart Icon">
+                    <a href="cart.php" aria-label="View shopping cart">
+                        <img src="image/cart-btn.svg" class="icon-img" alt="" width="20" height="20">
+                        <?php
+                        $cart_count_query = mysqli_query($con, "SELECT COUNT(*) as count FROM `cart` WHERE user_id = '$user_id'");
+                        $cart_count = mysqli_fetch_assoc($cart_count_query)['count'];
+                        if ($cart_count > 0) {
+                            echo '<span class="cart-badge">' . ($cart_count > 99 ? '99+' : $cart_count) . '</span>';
+                        }
+                        ?>
                     </a>
                 </div>
 
                 <div class="nav-icon profile">
-                    <a href="profile.php">
-                        <img src="image/profile white.svg" class="icon-img white-icon" alt="Profile Icon">
-                        <img src="image/profile orange.svg" class="icon-img orange-icon" alt="Profile Icon">
+                    <a href="profile.php" aria-label="View user profile">
+                        <?php if ($user_foto): ?>
+                            <img src="image/<?php echo $user_foto; ?>" class="icon-img profile-avatar" alt="" width="44" height="44" style="border-radius: 50%; object-fit: cover; filter: none; width: 44px; height: 44px;">
+                        <?php else: ?>
+                            <img src="image/profile white.svg" class="icon-img" alt="" width="20" height="20">
+                        <?php endif; ?>
                     </a>
                 </div>
             </div>
         </div>
     </nav>
 
-    <main class="main-content">
+    <main class="main-content" id="main-content">
+        <div class="content-layout">
+            <aside class="categories-sidebar">
+                <div class="category-section">
+                    <h4 class="category-main">Quick Actions</h4>
+                    <ul class="category-list">
+                        <li><a href="dashboard.php">Back to Dashboard</a></li>
+                        <li><a href="semua.php">Browse All Games</a></li>
+                        <li><a href="cart.php">My Cart</a></li>
+                        <li><a href="profile.php">My Profile</a></li>
+                    </ul>
+                </div>
+                <div class="category-section">
+                    <h4 class="category-main">🔥 Promo Info</h4>
+                    <ul class="category-list">
+                        <li><span style="color: #8b5cf6;">💰 Up to 70% off!</span></li>
+                        <li><span style="color: #f59e0b;">⏰ Limited time offers</span></li>
+                        <li><span style="color: #10b981;">✨ Best deals today</span></li>
+                        <li><a href="baru.php">New Releases</a></li>
+                    </ul>
+                </div>
+                <div class="category-section">
+                    <h4 class="category-main">💸 Discount Ranges</h4>
+                    <ul class="category-list">
+                        <li><span style="color: #ef4444;">90%+ discount</span></li>
+                        <li><span style="color: #f97316;">70-89% discount</span></li>
+                        <li><span style="color: #eab308;">50-69% discount</span></li>
+                        <li><span style="color: #22c55e;">25-49% discount</span></li>
+                    </ul>
+                </div>
+            </aside>
+            
+            <div class="main-section">
+                <div class="search-header">
+                    <div class="search-title-row">
+                        <h1 class="section-title">
+                            🔥 Special Offers & Discounts
+                        </h1>
+                        <div class="search-filters">
+                            <form method="GET" action="promo.php" class="sort-form">
+                                <select name="sort_by" class="sort-select" onchange="this.form.submit();">
+                                    <option value="discount_desc" <?php echo $sort_by == 'discount_desc' ? 'selected' : ''; ?>>Highest Discount</option>
+                                    <option value="discount_asc" <?php echo $sort_by == 'discount_asc' ? 'selected' : ''; ?>>Lowest Discount</option>
+                                    <option value="terlaris" <?php echo $sort_by == 'terlaris' ? 'selected' : ''; ?>>Most Popular</option>
+                                    <option value="harga_terendah" <?php echo $sort_by == 'harga_terendah' ? 'selected' : ''; ?>>Lowest Price</option>
+                                    <option value="harga_tertinggi" <?php echo $sort_by == 'harga_tertinggi' ? 'selected' : ''; ?>>Highest Price</option>
+                                </select>
+                            </form>
+                        </div>
+                    </div>
+                </div>
 
-        <section class="book-sections">
-            <div class="section-header">
-                <h2 class="section-title">Buku Promo</h2>
-
-            </div>
-
-            <div class="container">
-                <?php
-                $select_produk = mysqli_query($con, "SELECT * FROM `produk` WHERE `harga_diskon` IS NOT NULL LIMIT 30") or die('Query failed');
-
-                if (mysqli_num_rows($select_produk) > 0) {
-                    while ($fetch_produk = mysqli_fetch_assoc($select_produk)) {
-                        ?>
-                 
-                        <form class="book-card" action="detail.php" method="get">
-                            <div class="book-image">
-                                <a href="detail.php?produk_id=<?php echo $fetch_produk['id']; ?>">
-                                    <div class="book-cover">
-                                        <img class="book-cover" src="image/<?php echo $fetch_produk['foto']; ?>"
-                                            alt="Gambar Produk" />
-                                    </div>
-                                </a>
-                                <button type="button" class="wishlist" data-produk-id="<?php echo $fetch_produk['id']; ?>"
-                                    data-in-wishlist="<?php echo in_array($fetch_produk['id'], $wishlist_ids) ? 'true' : 'false'; ?>"
-                                    onclick="toggleWishlist(this);">
-                                    <img src="image/heart_grey.svg" class="heart-icon heart-grey" alt="Grey Heart Icon"
-                                        style="display:<?php echo in_array($fetch_produk['id'], $wishlist_ids) ? 'none' : 'inline'; ?>;" />
-                                    <img src="image/heart.svg" class="heart-icon heart-red" alt="Red Heart Icon"
-                                        style="display:<?php echo in_array($fetch_produk['id'], $wishlist_ids) ? 'inline' : 'none'; ?>;" />
-                                </button>
-                            </div>
-                            <div class="book-details">
-                                <a href="detail.php?produk_id=<?php echo $fetch_produk['id']; ?>" class="no-decoration">
-                                    <h3 class="book-title"><?php echo $fetch_produk['nama']; ?></h3>
-                                    <p class="book-author"><?php echo $fetch_produk['pengarang']; ?></p>
-                                    <p class="stock-status">
-                                        <?php echo ($fetch_produk['stok'] > 0) ? ' Tersedia' : 'Stok Habis'; ?>
-                                    </p>
-
-                                    <?php if ($fetch_produk['harga_diskon'] != NULL) { ?>
-                                        <p class="book-price normal-price">Rp.
-                                            <?php echo number_format($fetch_produk['harga'], 0, ',', '.'); ?>
-                                        </p>
-                                        <p class="book-price discount-price">Rp.
-                                            <?php echo number_format($fetch_produk['harga_diskon'], 0, ',', '.'); ?>
-                                        </p>
-                                    <?php } else { ?>
-                                        <p class="book-price discount-price">Rp.
-                                            <?php echo number_format($fetch_produk['harga'], 0, ',', '.'); ?>
-                                        </p>
-                                    <?php } ?>
-                            </div>
-                        </form>
+                <section class="game-sections" aria-labelledby="promo-results-title">
+                    <div class="game-container" role="list" aria-label="Discounted games" id="promo-results-container">
                         <?php
-                    }
-                }
-                ?>
+                        if (mysqli_num_rows($select_produk) > 0) {
+                            while ($fetch_produk = mysqli_fetch_assoc($select_produk)) {
+                                $rating_data = getAverageRating($con, $fetch_produk['id']);
+                                $is_in_wishlist = in_array($fetch_produk['id'], $wishlist_ids);
+                                $is_in_cart = in_array($fetch_produk['id'], $cart_items);
+                                $discount_percentage = round((($fetch_produk['harga'] - $fetch_produk['harga_diskon']) / $fetch_produk['harga']) * 100);
+                                ?>
+                                <article class="game-card" role="listitem" 
+                                         onclick="window.location.href='detail.php?produk_id=<?php echo $fetch_produk['id']; ?>'"
+                                         onkeydown="if(event.key==='Enter'||event.key===' ') window.location.href='detail.php?produk_id=<?php echo $fetch_produk['id']; ?>'"
+                                         tabindex="0">
+                                    <div class="game-cover-container">
+                                        <img class="game-cover" 
+                                             src="image/<?php echo $fetch_produk['foto']; ?>"
+                                             alt="<?php echo htmlspecialchars($fetch_produk['nama']); ?> cover" 
+                                             loading="lazy" />
+                                        <div class="discount-badge">-<?php echo $discount_percentage; ?>%</div>
+                                        <div class="promo-badge">🔥 PROMO</div>
+                                        <button type="button" 
+                                                class="wishlist-btn <?php echo $is_in_wishlist ? 'active' : ''; ?>" 
+                                                data-produk-id="<?php echo $fetch_produk['id']; ?>"
+                                                data-in-wishlist="<?php echo $is_in_wishlist ? 'true' : 'false'; ?>"
+                                                onclick="event.stopPropagation(); toggleWishlist(this);"
+                                                aria-label="<?php echo $is_in_wishlist ? 'Remove from wishlist' : 'Add to wishlist'; ?>">
+                                            <svg class="heart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div class="game-info">
+                                        <div class="game-price">
+                                            <span class="original-price">$<?php echo number_format($fetch_produk['harga'], 2); ?></span>
+                                            <span class="discounted-price">$<?php echo number_format($fetch_produk['harga_diskon'], 2); ?></span>
+                                        </div>
+                                        <h3 class="game-title"><?php echo htmlspecialchars($fetch_produk['nama']); ?></h3>
+                                        <p class="game-developer"><?php echo htmlspecialchars($fetch_produk['pengembang']); ?></p>
+                                        <div class="game-rating">
+                                            <span class="stars">
+                                                <?php echo generateStarRating($rating_data['average']); ?>
+                                            </span>
+                                            <span class="rating-text">
+                                                <?php echo $rating_data['total'] > 0 
+                                                      ? $rating_data['average'] . '/5 (' . $rating_data['total'] . ')' 
+                                                      : 'No ratings'; ?>
+                                            </span>
+                                        </div>
+                                        <button class="add-to-cart-btn <?php echo $is_in_cart ? 'added' : ''; ?>" 
+                                                data-product-id="<?php echo $fetch_produk['id']; ?>"
+                                                data-in-cart="<?php echo $is_in_cart ? 'true' : 'false'; ?>"
+                                                onclick="event.stopPropagation(); toggleCart(this);">
+                                            <?php echo $is_in_cart ? 'In Cart' : 'Add to Cart'; ?>
+                                        </button>
+                                    </div>
+                                </article>
+                                <?php
+                            }
+                        } else {
+                            ?>
+                            <div class="empty-message">
+                                <div class="empty-content">
+                                    <h3>No special offers available</h3>
+                                    <p>Check back later for amazing discounts!</p>
+                                    <a href="semua.php" class="empty-action-btn">Browse All Games</a>
+                                </div>
+                            </div>
+                            <?php
+                        }
+                        ?>
+                    </div>
+                </section>
             </div>
-
-
-        </section>
-
+        </div>
     </main>
 
-    <div id="wishlist-notification" class="wishlist-notification">
-        <img src="image/heart yellow.svg" class="heart-icon heart-yellow">
-        <span class="wishlist-message">Berhasil dimasukkan ke Wishlist!</span>
+    <!-- Notification Toast -->
+    <div id="notification-toast" class="notification-toast">
+        <span id="notification-message"></span>
     </div>
 
-    <footer>
-        <p>&copy; Kelompok 1 | PPW | <a href="#" class="privacy-policy">Privacy Policy</a></p>
+    <footer class="main-footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Vault Digital Store</h4>
+                <p>Your premium destination for digital games</p>
+            </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="dashboard.php">Home</a></li>
+                    <li><a href="semua.php">All Games</a></li>
+                    <li><a href="baru.php">New Releases</a></li>
+                    <li><a href="promo.php">Special Offers</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Account</h4>
+                <ul>
+                    <li><a href="profile.php">My Profile</a></li>
+                    <li><a href="cart.php">My Cart</a></li>
+                    <li><a href="order.php">Order History</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 Vault Digital Store. All rights reserved.</p>
+        </div>
     </footer>
 
     <script>
-        
-document.querySelectorAll(".wishlist").forEach(button => {
-    const produkId = button.dataset.produkId;
-    const inWishlist = button.getAttribute("data-in-wishlist") === "true";
+        // Wishlist functionality
+        function toggleWishlist(button) {
+            const produkId = button.dataset.produkId;
+            const inWishlist = button.getAttribute("data-in-wishlist") === "true";
 
-    const greyIcon = button.querySelector(".heart-grey");
-    const redIcon = button.querySelector(".heart-red");
-
-    if (inWishlist) {
-        greyIcon.style.display = "none";
-        redIcon.style.display = "inline";
-    } else {
-        greyIcon.style.display = "inline";
-        redIcon.style.display = "none";
-    }
-});
-
-function showWishlistNotification(message) {
-    const notification = document.getElementById("wishlist-notification");
-    if (notification) {
-        notification.textContent = message; 
-        notification.classList.add("show"); 
-
-        setTimeout(() => {
-            notification.classList.remove("show");  
-        }, 3000); 
-    }
-}
-
-
-function toggleWishlist(button) {
-    const produkId = button.dataset.produkId;
-    const inWishlist = button.getAttribute("data-in-wishlist") === "true";
-
-    const greyIcon = button.querySelector(".heart-grey");
-    const redIcon = button.querySelector(".heart-red");
-
-    fetch("dashboard.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `toggle_wishlist=true&produk_id=${produkId}`
-    })
-    .then(response => {
-        if (response.ok) {
-            
-            button.setAttribute("data-in-wishlist", inWishlist ? "false" : "true");
-
-            if (inWishlist) {
-                greyIcon.style.display = "inline";
-                redIcon.style.display = "none";
-                
-                showWishlistNotification("Item berhasil dihapus dari wishlist.");
-            } else {
-                greyIcon.style.display = "none";
-                redIcon.style.display = "inline";
-               
-                showWishlistNotification("Item berhasil dimasukkan ke wishlist.");
-            }
-        } else {
-            alert("Gagal memperbarui wishlist.");
-        }
-    })
-    .catch(() => {
-        alert("Terjadi kesalahan jaringan.");
-    });
-}
-
-
-        const toggleButton = document.querySelector('.dropdown-toggle2');
-        const dropdownMenu = document.querySelector('.dropdown-menu2');
-        const filterItems = document.querySelectorAll('.filter-menu2');
-        const activeFilterDisplay = document.querySelector('.filter-menu.active');
-
-        
-        toggleButton.addEventListener('click', () => {
-            dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
-        });
-
-       
-        filterItems.forEach(item => {
-            item.addEventListener('click', () => {
-               
-                document.querySelector('.filter-menu2.active').classList.remove('active');
-                item.classList.add('active');
-
-                
-                const activeText = item.textContent;
-                toggleButton.querySelector('.filter-menu').textContent = activeText;
-
-               
-                console.log(`Selected filter: ${activeText}`);
-
-                dropdownMenu.style.display = 'none';
+            fetch("dashboard.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: `toggle_wishlist=true&produk_id=${produkId}`
+            })
+            .then(response => {
+                if (response.ok) {
+                    button.setAttribute("data-in-wishlist", inWishlist ? "false" : "true");
+                    button.classList.toggle("active");
+                    
+                    const message = inWishlist ? "Removed from wishlist" : "Added to wishlist";
+                    showNotification(message, 'success');
+                } else {
+                    showNotification("Failed to update wishlist", 'error');
+                }
+            })
+            .catch(() => {
+                showNotification("Network error occurred", 'error');
             });
-        });
+        }
 
-        document.addEventListener('click', (event) => {
-            if (!toggleButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
-                dropdownMenu.style.display = 'none';
+        // Cart functionality
+        function toggleCart(button) {
+            const productId = button.dataset.productId;
+            const inCart = button.getAttribute("data-in-cart") === "true";
+
+            if (inCart) {
+                showNotification("Item already in cart", 'info');
+                return;
             }
-        });
 
-        const tabs = document.querySelectorAll('.sidebar ul.menu li');
-        const tabContents = document.querySelectorAll('.tab-content');
+            fetch("dashboard.php", {
+                method: "POST", 
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: `add_to_cart=true&produk_id=${productId}&quantity=1`
+            })
+            .then(response => {
+                if (response.ok) {
+                    button.setAttribute("data-in-cart", "true");
+                    button.classList.add("added");
+                    button.textContent = "In Cart";
+                    
+                    // Update cart count in navbar
+                    const cartBadge = document.querySelector('.cart-badge');
+                    if (cartBadge) {
+                        const currentCount = parseInt(cartBadge.textContent) || 0;
+                        cartBadge.textContent = currentCount + 1;
+                    }
+                    
+                    showNotification("Added to cart successfully!", 'success');
+                } else {
+                    showNotification("Failed to add to cart", 'error');
+                }
+            })
+            .catch(() => {
+                showNotification("Network error occurred", 'error');
+            });
+        }
 
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelector('.sidebar ul.menu li.active').classList.remove('active');
-                tab.classList.add('active');
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const toast = document.getElementById('notification-toast');
+            const messageElement = document.getElementById('notification-message');
+            
+            messageElement.textContent = message;
+            toast.className = `notification-toast ${type}`;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
 
-                const targetId = tab.getAttribute('data-tab');
-                tabContents.forEach(content => {
-                    if (content.id === targetId) {
-                        content.classList.add('active');
-                    } else {
-                        content.classList.remove('active');
+        // Mobile menu toggle
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            const toggle = document.querySelector('.mobile-menu-toggle');
+            
+            menu.classList.toggle('active');
+            const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+            toggle.setAttribute('aria-expanded', !isExpanded);
+        }
+
+        // Dropdown functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropdownToggle = document.querySelector('.dropdown-toggle');
+            const dropdownMenu = document.querySelector('.dropdown-menu');
+            
+            if (dropdownToggle && dropdownMenu) {
+                dropdownToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    dropdownMenu.classList.toggle('show');
+                });
+                
+                document.addEventListener('click', function(e) {
+                    if (!dropdownToggle.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                        dropdownMenu.classList.remove('show');
                     }
                 });
-
-                console.log(`Switched to tab: ${targetId}`);
-            });
+            }
         });
-
     </script>
 
-
-
 </body>
-
 
 </html>
