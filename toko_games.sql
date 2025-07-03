@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Jul 03, 2025 at 05:33 PM
+-- Generation Time: Jul 03, 2025 at 07:11 PM
 -- Server version: 9.1.0
 -- PHP Version: 8.3.14
 
@@ -93,16 +93,6 @@ CREATE TABLE IF NOT EXISTS `orders` (
   KEY `user_id` (`user_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=39 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `orders`
---
-
-INSERT INTO `orders` (`id`, `user_id`, `total`, `created_at`) VALUES
-(35, 33, 3.98, '2025-07-03 16:56:14'),
-(36, 33, 32.98, '2025-07-03 17:07:44'),
-(37, 33, 51.96, '2025-07-03 17:11:54'),
-(38, 33, 3.98, '2025-07-03 17:32:16');
-
 -- --------------------------------------------------------
 
 --
@@ -120,18 +110,6 @@ CREATE TABLE IF NOT EXISTS `order_items` (
   KEY `order_id` (`order_id`),
   KEY `produk_id` (`produk_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=167 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `order_items`
---
-
-INSERT INTO `order_items` (`id`, `order_id`, `produk_id`, `price`, `steam_key`) VALUES
-(161, 35, 33, 0.99, 'VAULT-A4695-8ADA5-FF4AE'),
-(162, 36, 32, 29.99, 'VAULT-58BD6-DC3E6-F14EC'),
-(163, 37, 2, 23.99, 'VAULT-09AC9-F81EA-A67D9'),
-(164, 37, 19, 4.99, 'VAULT-ACCB7-ED5FD-BB2D0'),
-(165, 37, 11, 19.99, 'VAULT-5FFC3-97C3A-AC16E'),
-(166, 38, 33, 0.99, 'VAULT-4F7A7-FA6CD-86803');
 
 -- --------------------------------------------------------
 
@@ -152,7 +130,7 @@ CREATE TABLE IF NOT EXISTS `produk` (
   `sold` int DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `kategori_id` (`kategori_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=105 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=107 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `produk`
@@ -165,7 +143,6 @@ INSERT INTO `produk` (`id`, `kategori_id`, `nama`, `detail`, `pengembang`, `foto
 (4, 8, 'Animal Crossing: New Horizons', 'Escape to a deserted island and create your own paradise. A relaxing life simulation game.', 'Nintendo', 'animalCrossing.png', 59.99, NULL, 0),
 (5, 5, 'Company of Heroes 3', 'The legendary strategy franchise is back! A cinematic WWII experience awaits.', 'Relic Entertainment', 'companyOfHeroes3.png', 59.99, 29.99, 0),
 (6, 4, 'Super Mario Odyssey', 'Explore huge 3D kingdoms filled with secrets and surprises, using Mario\'s new abilities.', 'Nintendo', 'superMarioOdyssey.png', 59.99, NULL, 0),
-(7, 2, 'Avatar: Frontiers of Pandora', 'Explore the breathtaking Western Frontier of Pandora in this first-person action-adventure.', 'Ubisoft', 'avatar.png', 69.99, 41.99, 0),
 (8, 2, 'The Witcher 3: Wild Hunt', 'A story-driven, open-world RPG set in a visually stunning fantasy universe.', 'CD PROJEKT RED', 'theWitcher3.png', 39.99, 9.99, 0),
 (9, 2, 'Sekiro: Shadows Die Twice', 'Carve your own clever path to vengeance in this award-winning action-adventure game.', 'FromSoftware', 'sekiro.png', 59.99, 29.99, 0),
 (10, 2, 'Dark Souls III', 'An action RPG set in a hauntingly beautiful, dark world. Prepare to die.', 'FromSoftware', 'darkSoul3.png', 59.99, 29.99, 0),
@@ -208,15 +185,6 @@ CREATE TABLE IF NOT EXISTS `rating` (
   KEY `produk_id` (`produk_id`),
   KEY `user_id` (`user_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=291 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `rating`
---
-
-INSERT INTO `rating` (`id`, `produk_id`, `user_id`, `rating`, `comment`, `created_at`) VALUES
-(288, 33, 33, 5, '', '2025-07-03 16:56:36'),
-(289, 11, 33, 5, '', '2025-07-03 17:12:03'),
-(290, 32, 33, 5, 'KEREN BANGET GAMENYA', '2025-07-03 17:15:37');
 
 -- --------------------------------------------------------
 
