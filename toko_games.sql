@@ -185,7 +185,7 @@ INSERT INTO `produk` (`id`, `kategori_id`, `nama`, `detail`, `pengembang`, `foto
 	(46, 10, 'Persona 5 Royal', 'A stylish JRPG about high schoolers and supernatural heists.', 'Atlus', 'persona5Royal.png', 59.99, 39.99, 0),
 	(47, 10, 'Dragon Quest XI', 'A classic JRPG with a modern polish and epic story.', 'Square Enix', 'dragonQuestXI.png', 49.99, NULL, 0),
 	(48, 10, 'Ni no Kuni II: Revenant Kingdom', 'A beautiful JRPG with a touching story and stunning visuals.', 'Level-5', 'ninokuni.png', 59.99, NULL, 0),
-	(49, 10, 'Tales of Arise', 'The latest in the beloved Tales series. Action-packed combat and a captivating story.', 'Bandai Namco', 'talesOfArise.png', 59.99, NULL, 0),
+	(49, 10, 'Tales of Arise', 'The latest in the beloved Tales series. Action-packed combat and a captivating story.', 'Bandai Namco', 'talesOfArise.avif', 59.99, NULL, 0),
 	(50, 18, 'HARRY Dont GO', 'There is no place to HIDE and there is no where to RUN. HARRY Dont GO will let you experience the thrill of getting chased by A LOT of MONSTERS, how will Harry escape these monster?', 'Hansen Nathaniel', 'harryDontGo.png', 44.99, 14.99, 0),
 	(51, 16, 'Hansen the game', 'A game where you become a Chinese and have power to fight your lecturer', 'Ilmu Komputer 23 B', 'audacity_cover.jpg', 69.99, 66.6, 0);
 
