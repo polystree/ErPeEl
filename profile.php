@@ -834,7 +834,7 @@ if (isset($_POST['logout'])) {
                                             ✅ Reviewed (${item.rating}/5)
                                         </a>` :
                                         `<a href="reviewrate.php?order_id=${orderId}&produk_id=${item.produk_id}"
-                                            style="background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);"
+                                            style="background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3); text-decoration: none;"
                                             onmouseover="this.style.background='var(--primary-hover)'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(139, 92, 246, 0.4)'"
                                             onmouseout="this.style.background='var(--primary)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(139, 92, 246, 0.3)'"
                                             class="detail-review-btn"
