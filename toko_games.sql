@@ -411,7 +411,7 @@ INSERT INTO `users` (`id`, `username`, `email`, `password`, `foto`, `role`) VALU
 (29, 'BuilderBob', 'builder.bob@email.com', 'pass123', NULL, NULL),
 (30, 'IndieStar', 'indie.star@email.com', 'pass123', NULL, NULL),
 (31, 'test', 'tes@tes.com', '123', NULL, NULL),
-(32, 'admin', 'admin@admin.com', '123', NULL, NULL),
+(32, 'admin', 'admin@admin.com', '123', NULL, admin),
 (33, 'cinder', '123@123.123', '123', NULL, NULL);
 
 -- --------------------------------------------------------
