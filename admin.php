@@ -1,6 +1,7 @@
 <?php
 require "koneksi.php";
 require "session.php";
+require "image_helper.php";
 
 if ($_SESSION['role'] !== 'admin') {
     header('Location: dashboard.php');
@@ -77,7 +78,7 @@ $user_data = $user_result->fetch_assoc();
             <div class="admin-info">
                 <div class="admin-avatar">
                     <?php if ($foto): ?>
-                        <img src="image/<?php echo $foto; ?>" class="icon-img profile-avatar" alt="" width="44" height="44" style="border-radius: 50%; object-fit: cover; filter: none; width: 44px; height: 44px;">
+                        <img src="<?php echo $foto; ?>" class="icon-img profile-avatar" alt="" width="44" height="44" style="border-radius: 50%; object-fit: cover; filter: none; width: 44px; height: 44px;">
                     <?php else: ?>
                         <img src="image/profile white.svg" class="icon-img" alt="" width="20" height="20">
                     <?php endif; ?>
@@ -129,9 +130,16 @@ $user_data = $user_result->fetch_assoc();
                         <?php while($data = $result->fetch_assoc()): ?>
                         <tr>
                             <td>
+                                <?php 
+                                // Debug: Show what's in the foto field
+                                $foto_value = $data['foto'];
+                                $image_src = getImageSrc($foto_value);
+                                // echo "<!-- Debug: foto field = " . htmlspecialchars($foto_value) . ", image_src = " . htmlspecialchars($image_src) . " -->";
+                                ?>
                                 <img class="product-image" 
-                                     src="image/<?php echo htmlspecialchars($data['foto']); ?>" 
-                                     alt="<?php echo htmlspecialchars($data['nama']); ?>" />
+                                     src="<?php echo $image_src; ?>" 
+                                     alt="<?php echo htmlspecialchars($data['nama']); ?>" 
+                                     onerror="this.src='image/avatar.png'" />
                             </td>
                             <td class="product-name">
                                 <?php echo htmlspecialchars($data['nama']); ?>
@@ -144,15 +152,15 @@ $user_data = $user_result->fetch_assoc();
                             </td>
                             <td class="product-price">
                                 $<?php 
-                                    if (!empty($data['harga_diskon'])) {
-                                        echo number_format($data['harga_diskon'], 2);
+                                    if (!empty($data['harga_diskon']) && $data['harga_diskon'] !== null) {
+                                        echo number_format((float)$data['harga_diskon'], 2);
                                     } else {
-                                        echo number_format($data['harga'], 2);
+                                        echo number_format((float)($data['harga'] ?? 0), 2);
                                     }
                                 ?>
                             </td>
                             <td class="sold-count">
-                                <?php echo number_format($data['sold']); ?>
+                                <?php echo number_format((int)($data['sold'] ?? 0)); ?>
                             </td>
                             <td>
                                 <a href="edit-game.php?id=<?php echo $data['id']; ?>" class="edit-btn">

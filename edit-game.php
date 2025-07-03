@@ -1,6 +1,7 @@
 <?php
 require "session.php";
 require "koneksi.php";
+require "image_helper.php";
 
 // Get user info
 $user_id = $_SESSION['user_id'];
@@ -46,42 +47,18 @@ if (isset($_POST['submit'])) {
     $kategori_id = htmlspecialchars($_POST['kategori_id']);
     $harga = htmlspecialchars($_POST['harga']);
     $harga_diskon = !empty($_POST['harga_diskon']) ? htmlspecialchars($_POST['harga_diskon']) : null;
-    $uploaded_file = $game['foto']; 
+    $image_url = htmlspecialchars($_POST['image_url']);
 
-    // Handle file upload
-    if ($_FILES["image"]["error"] === 0) {
-        $file_name = $_FILES["image"]["name"];
-        $file_size = $_FILES["image"]["size"];
-        $tmpname = $_FILES["image"]["tmp_name"];
-
-        $validimage = ['jpg', 'jpeg', 'png', 'avif'];
-        $image_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
-
-        if (!in_array($image_ext, $validimage)) {
-            $error_message = "Invalid image extension";
-        } elseif ($file_size > 10000000) {
-            $error_message = "File size too large";
-        } else {
-            $newimagename = uniqid() . '.' . $image_ext;
-            $upload_path = 'image/' . $newimagename;
-            
-            if (move_uploaded_file($tmpname, $upload_path)) {
-                $uploaded_file = $newimagename; 
-            } else {
-                $error_message = "Failed to upload image";
-            }
-        }
-    }
-    
-    // Validate discount price
-    if (!isset($error_message) && $harga_diskon !== null && floatval($harga_diskon) >= floatval($harga)) {
+    if (empty($nama) || empty($pengembang) || empty($harga) || empty($image_url)) {
+        $error_message = "Game name, developer, price, and image URL are required.";
+    } elseif ($harga_diskon !== null && floatval($harga_diskon) >= floatval($harga)) {
         $error_message = "Discount price must be lower than the regular price.";
-    }
-    
-    if (!isset($error_message)) {
+    } elseif (!filter_var($image_url, FILTER_VALIDATE_URL)) {
+        $error_message = "Please enter a valid URL for the image.";
+    } else {
         $sql_update = "UPDATE produk SET nama = ?, detail = ?, pengembang = ?, kategori_id = ?, harga = ?, harga_diskon = ?, foto = ? WHERE id = ?";
         $stmt_update = $con->prepare($sql_update);
-        $stmt_update->bind_param('sssiddsi', $nama, $detail, $pengembang, $kategori_id, $harga, $harga_diskon, $uploaded_file, $id);
+        $stmt_update->bind_param('sssiddsi', $nama, $detail, $pengembang, $kategori_id, $harga, $harga_diskon, $image_url, $id);
         
         if ($stmt_update->execute()) {
             $success_message = "Game updated successfully!";
@@ -149,43 +126,34 @@ $categories_result = mysqli_query($con, $categories_query);
             <div class="form-container">
                 <h2 class="form-title">Game Information</h2>
 
-                <form class="game-form" method="post" enctype="multipart/form-data">
+                <form class="game-form" method="post">
                     <!-- Current Image -->
                     <div class="current-image-section">
                         <label class="current-image-label">Current Image</label>
-                        <img src="image/<?= htmlspecialchars($game['foto']) ?>" alt="Current Game Image" class="current-image">
+                        <img src="<?= getImageSrc($game['foto']) ?>" alt="Current Game Image" class="current-image">
                     </div>
 
-                    <!-- Image Upload -->
+                    <!-- Image URL -->
                     <div class="form-group">
-                        <label for="image">Game Image</label>
-                        <div class="file-upload-container">
-                            <label for="image" class="file-upload-label" id="file-upload-label">
-                                <svg class="file-upload-icon" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-                                </svg>
-                                <span class="file-upload-text">Click to upload new image</span>
-                                <span class="file-upload-hint">AVIF, PNG, JPG, JPEG up to 10MB</span>
-                            </label>
-                            <input type="file" name="image" id="image" class="file-input" accept=".jpg,.jpeg,.png,.avif" onchange="previewImage(this)">
-                            
-                            <!-- Image Preview Container -->
-                            <div class="image-preview-container" id="image-preview-container" style="display: none;">
-                                <div class="image-preview-header">
-                                    <span class="preview-title">New Image Preview</span>
-                                    <button type="button" class="remove-image-btn" onclick="removeImage()">
-                                        <svg viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/>
-                                        </svg>
-                                    </button>
-                                </div>
-                                <div class="image-preview-wrapper">
-                                    <img id="image-preview" src="" alt="Preview" class="image-preview">
-                                </div>
-                                <div class="image-info">
-                                    <span id="image-name"></span>
-                                    <span id="image-size"></span>
-                                </div>
+                        <label for="image_url">Game Image URL</label>
+                        <input type="url" class="form-input" name="image_url" id="image_url" value="<?= htmlspecialchars($game['foto']) ?>" placeholder="https://example.com/image.jpg" required>
+                        <div class="form-hint">Enter a direct URL to the game image</div>
+                        
+                        <!-- Image Preview Container -->
+                        <div class="image-preview-container" id="image-preview-container" style="display: none;">
+                            <div class="image-preview-header">
+                                <span class="preview-title">Image Preview</span>
+                                <button type="button" class="remove-image-btn" onclick="clearImagePreview()">
+                                    <svg viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="image-preview-wrapper">
+                                <img id="image-preview" src="" alt="Preview" class="image-preview">
+                            </div>
+                            <div class="image-info">
+                                <span id="image-url-display"></span>
                             </div>
                         </div>
                     </div>
@@ -311,11 +279,16 @@ $categories_result = mysqli_query($con, $categories_query);
         document.addEventListener('DOMContentLoaded', function() {
             const regularPriceInput = document.getElementById('harga');
             const discountPriceInput = document.getElementById('harga_diskon');
+            const imageUrlInput = document.getElementById('image_url');
             const gameForm = document.querySelector('.game-form');
             
             // Validate on input change
             regularPriceInput.addEventListener('input', validatePrices);
             discountPriceInput.addEventListener('input', validatePrices);
+            
+            // Add image URL validation
+            imageUrlInput.addEventListener('input', previewImageFromUrl);
+            imageUrlInput.addEventListener('blur', previewImageFromUrl);
             
             // Validate on form submit
             gameForm.addEventListener('submit', function(e) {
@@ -326,69 +299,55 @@ $categories_result = mysqli_query($con, $categories_query);
             });
         });
 
-        // Image preview functionality
-        function previewImage(input) {
-            const file = input.files[0];
+        // Image preview functionality for URL
+        function previewImageFromUrl() {
+            const urlInput = document.getElementById('image_url');
+            const url = urlInput.value.trim();
             const previewContainer = document.getElementById('image-preview-container');
-            const uploadLabel = document.getElementById('file-upload-label');
             const previewImg = document.getElementById('image-preview');
-            const imageName = document.getElementById('image-name');
-            const imageSize = document.getElementById('image-size');
+            const imageUrlDisplay = document.getElementById('image-url-display');
 
-            if (file) {
-                // Validate file type
-                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/avif'];
-                if (!allowedTypes.includes(file.type)) {
-                    alert('Please select a valid image file (JPEG, JPG, PNG, AVIF)');
-                    input.value = '';
-                    return;
-                }
-
-                // Validate file size (10MB = 10 * 1024 * 1024 bytes)
-                if (file.size > 10 * 1024 * 1024) {
-                    alert('File size must not exceed 10MB');
-                    input.value = '';
-                    return;
-                }
-
-                // Create FileReader to read the file
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    previewImg.src = e.target.result;
-                    imageName.textContent = file.name;
-                    imageSize.textContent = formatFileSize(file.size);
-                    
-                    // Hide upload label and show preview
-                    uploadLabel.style.display = 'none';
+            if (url && isValidImageUrl(url)) {
+                // Test if the image can be loaded
+                const testImg = new Image();
+                testImg.onload = function() {
+                    previewImg.src = url;
+                    imageUrlDisplay.textContent = url;
                     previewContainer.style.display = 'block';
                 };
-                reader.readAsDataURL(file);
+                testImg.onerror = function() {
+                    clearImagePreview();
+                    urlInput.setCustomValidity('Unable to load image from this URL');
+                };
+                testImg.src = url;
+            } else {
+                clearImagePreview();
+                if (url) {
+                    urlInput.setCustomValidity('Please enter a valid image URL');
+                } else {
+                    urlInput.setCustomValidity('');
+                }
             }
         }
 
-        function removeImage() {
-            const input = document.getElementById('image');
-            const previewContainer = document.getElementById('image-preview-container');
-            const uploadLabel = document.getElementById('file-upload-label');
-            const previewImg = document.getElementById('image-preview');
-
-            // Clear the input
-            input.value = '';
-            
-            // Reset preview
-            previewImg.src = '';
-            
-            // Show upload label and hide preview
-            uploadLabel.style.display = 'flex';
-            previewContainer.style.display = 'none';
+        function isValidImageUrl(url) {
+            try {
+                const urlObj = new URL(url);
+                const pathname = urlObj.pathname.toLowerCase();
+                return pathname.match(/\.(jpg|jpeg|png|gif|webp|avif|bmp|svg)$/i);
+            } catch {
+                return false;
+            }
         }
 
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        function clearImagePreview() {
+            const previewContainer = document.getElementById('image-preview-container');
+            const previewImg = document.getElementById('image-preview');
+            const urlInput = document.getElementById('image_url');
+            
+            previewImg.src = '';
+            previewContainer.style.display = 'none';
+            urlInput.setCustomValidity('');
         }
     </script>
 </body>

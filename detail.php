@@ -107,6 +107,15 @@ if ($has_purchased) {
     $last_order_id = $order_row ? $order_row['id'] : null;
 }
 
+// Check if user has already reviewed this product
+$existing_review_query = mysqli_query($con, "
+    SELECT id, rating, comment 
+    FROM rating 
+    WHERE produk_id = '{$fetch_produk['id']}' AND user_id = '$user_id'
+");
+$has_reviewed = mysqli_num_rows($existing_review_query) > 0;
+$user_review = $has_reviewed ? mysqli_fetch_assoc($existing_review_query) : null;
+
 // Get average rating for this product
 $rating_data = getAverageRating($con, $fetch_produk['id']);
 
@@ -424,15 +433,29 @@ $result_reviews = $stmt->get_result();
                     <div class="section-header">
                         <h2 class="section-title" id="reviews-title">User Reviews</h2>
                         <span class="review-count"><?php echo mysqli_num_rows($result_reviews); ?> reviews</span>
+                        
                         <?php if ($has_purchased && $last_order_id): ?>
+                            <?php if ($has_reviewed): ?>
+                                <!-- User has already reviewed -->
+                                <div class="user-review-status">
+                                    <span class="reviewed-badge">✅ You reviewed this game (<?php echo $user_review['rating']; ?>/5)</span>
+                                </div>
+                            <?php else: ?>
+                                <!-- User can write a review -->
+                                <a href="reviewrate.php?order_id=<?php echo $last_order_id; ?>&produk_id=<?php echo $fetch_produk['id']; ?>"
+                                    class="detail-review-btn"
+                                    role="button"
+                                    aria-label="Write a review for this game">
+                                    Write a Review
+                                </a>
+                            <?php endif; ?>
+                        <?php elseif (!$has_purchased): ?>
+                            <!-- User hasn't purchased the game -->
+                            <div class="review-restriction">
+                                <span class="purchase-required">Purchase this game to write a review</span>
+                            </div>
                         <?php endif; ?>
                     </div>
-                    <a href="reviewrate.php?order_id=<?php echo $last_order_id; ?>&produk_id=<?php echo $fetch_produk['id']; ?>"
-                        class="detail-review-btn"
-                        role="button"
-                        aria-label="Write a review for this game">
-                        Write a Review
-                    </a>
 
                     <div class="reviews-container">
                         <?php

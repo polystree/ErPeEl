@@ -1,6 +1,7 @@
 <?php
 require "session.php";
 require "koneksi.php";
+require "image_helper.php";
 
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Pragma: no-cache");
@@ -333,7 +334,7 @@ function generateStarRating($avg_rating) {
                     <div class="featured-game-slide" data-index="<?php echo $index; ?>">
                         <a href="detail.php?produk_id=<?php echo $featured_game['id']; ?>" class="featured-game-link">
                             <div class="featured-game-image">
-                                <img src="image/<?php echo htmlspecialchars($featured_game['foto']); ?>"
+                                <img src="<?php echo getImageSrc(htmlspecialchars($featured_game['foto'])); ?>"
                                      alt="<?php echo htmlspecialchars($featured_game['nama']); ?> - Featured Game" 
                                      loading="<?php echo $index === 0 ? 'eager' : 'lazy'; ?>">
                                 <div class="featured-overlay">
@@ -386,7 +387,7 @@ function generateStarRating($avg_rating) {
                                  tabindex="0">
                             <div class="game-cover-container">
                                 <img class="game-cover" 
-                                     src="image/<?php echo $fetch_produk['foto']; ?>"
+                                     src="<?php echo getImageSrc($fetch_produk['foto']); ?>"
                                      alt="<?php echo htmlspecialchars($fetch_produk['nama']); ?> cover" 
                                      loading="lazy" />
                                 <button type="button" 

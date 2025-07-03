@@ -154,12 +154,14 @@ if (isset($_POST['action']) && $_POST['action'] === 'get_order_items') {
         exit();
     }
     
-    // Get order items with product details
+    // Get order items with product details and review status
     $items_query = mysqli_query($con, "
         SELECT oi.produk_id, oi.order_id, oi.price, oi.steam_key,
-            p.nama, p.foto, p.pengembang, p.harga, p.harga_diskon
+            p.nama, p.foto, p.pengembang, p.harga, p.harga_diskon,
+            r.id AS review_id, r.rating, r.comment AS review_comment, r.created_at AS review_date
         FROM order_items oi
         JOIN produk p ON oi.produk_id = p.id
+        LEFT JOIN rating r ON r.produk_id = p.id AND r.user_id = '$user_id'
         WHERE oi.order_id = '$order_id'
         ORDER BY p.nama
     ");

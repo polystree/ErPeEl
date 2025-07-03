@@ -1,6 +1,7 @@
 <?php
 require "session.php";
 require "koneksi.php";
+require "image_helper.php";
 
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Pragma: no-cache");
@@ -57,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_reviews'])) {
 // Get order details for review
 $order_details = [];
 if ($order_id > 0) {
-    // Build query to load items for review (product-level)
+    // Build query to load items for review (product-level) with existing review check
     $where = "o.id = '$order_id' AND o.user_id = '$user_id'";
     if ($filter_produk_id > 0) {
         $where .= " AND oi.produk_id = '$filter_produk_id'";
@@ -69,10 +70,15 @@ if ($order_id > 0) {
                 p.nama AS nama_produk,
                 p.foto AS gambar_produk,
                 p.pengembang,
-                p.harga AS harga_per_unit
+                p.harga AS harga_per_unit,
+                r.id AS existing_review_id,
+                r.rating AS existing_rating,
+                r.comment AS existing_comment,
+                r.created_at AS review_date
               FROM orders o
               JOIN order_items oi ON o.id = oi.order_id
               JOIN produk p ON oi.produk_id = p.id
+              LEFT JOIN rating r ON r.produk_id = p.id AND r.user_id = '$user_id'
               WHERE $where";
     $result = mysqli_query($con, $query);
     if ($result && mysqli_num_rows($result) > 0) {
@@ -211,7 +217,7 @@ if (empty($order_details)) {
                                     <div class="review-item-card">
                                         <div class="game-info-section">
                                             <div class="game-image">
-                                                <img src="image/<?php echo $item['gambar_produk']; ?>" 
+                                                <img src="<?php echo getImageSrc($item['gambar_produk']); ?>" 
                                                      alt="<?php echo htmlspecialchars($item['nama_produk']); ?>" 
                                                      loading="lazy">
                                             </div>
@@ -222,35 +228,87 @@ if (empty($order_details)) {
                                             </div>
                                         </div>
 
-                                        <div class="rating-section">
-                                            <label class="rating-label">Your Rating:</label>
-                                            <div class="star-rating" data-index="<?php echo $index; ?>">
-                                                <span class="star" data-rating="1">☆</span>
-                                                <span class="star" data-rating="2">☆</span>
-                                                <span class="star" data-rating="3">☆</span>
-                                                <span class="star" data-rating="4">☆</span>
-                                                <span class="star" data-rating="5">☆</span>
+                                        <?php if ($item['existing_review_id']): ?>
+                                            <!-- Already Reviewed Section -->
+                                            <div class="already-reviewed-section">
+                                                <div class="review-status">
+                                                    <h4 class="status-title">✅ Already Reviewed</h4>
+                                                    <p class="review-date">Reviewed on <?php echo date('F j, Y', strtotime($item['review_date'])); ?></p>
+                                                </div>
+                                                
+                                                <div class="existing-review">
+                                                    <div class="existing-rating">
+                                                        <label class="rating-label">Your Rating:</label>
+                                                        <div class="star-display">
+                                                            <?php 
+                                                            $rating = (int)$item['existing_rating'];
+                                                            for ($i = 1; $i <= 5; $i++) {
+                                                                echo $i <= $rating ? '★' : '☆';
+                                                            }
+                                                            ?>
+                                                            <span class="rating-value"><?php echo $item['existing_rating']; ?>/5</span>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <?php if (!empty($item['existing_comment'])): ?>
+                                                        <div class="existing-comment">
+                                                            <label class="comment-label">Your Review:</label>
+                                                            <div class="comment-display">
+                                                                <?php echo nl2br(htmlspecialchars($item['existing_comment'])); ?>
+                                                            </div>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                </div>
                                             </div>
-                                            <input type="hidden" name="rating[]" value="0" id="rating-<?php echo $index; ?>">
-                                            <input type="hidden" name="produk_id[]" value="<?php echo $item['produk_id']; ?>">
-                                        </div>
+                                        <?php else: ?>
+                                            <!-- Review Form Section -->
+                                            <div class="rating-section">
+                                                <label class="rating-label">Your Rating:</label>
+                                                <div class="star-rating" data-index="<?php echo $index; ?>">
+                                                    <span class="star" data-rating="1">☆</span>
+                                                    <span class="star" data-rating="2">☆</span>
+                                                    <span class="star" data-rating="3">☆</span>
+                                                    <span class="star" data-rating="4">☆</span>
+                                                    <span class="star" data-rating="5">☆</span>
+                                                </div>
+                                                <input type="hidden" name="rating[]" value="0" id="rating-<?php echo $index; ?>">
+                                                <input type="hidden" name="produk_id[]" value="<?php echo $item['produk_id']; ?>">
+                                            </div>
 
-                                        <div class="comment-section">
-                                            <label for="comment-<?php echo $index; ?>" class="comment-label">Your Review:</label>
-                                            <textarea 
-                                                name="comment[]" 
-                                                id="comment-<?php echo $index; ?>" 
-                                                class="comment-textarea"
-                                                placeholder="Share your thoughts about this game... (optional)"
-                                                rows="3"></textarea>
-                                        </div>
+                                            <div class="comment-section">
+                                                <label for="comment-<?php echo $index; ?>" class="comment-label">Your Review:</label>
+                                                <textarea 
+                                                    name="comment[]" 
+                                                    id="comment-<?php echo $index; ?>" 
+                                                    class="comment-textarea"
+                                                    placeholder="Share your thoughts about this game... (optional)"
+                                                    rows="3"></textarea>
+                                            </div>
+                                        <?php endif; ?>
                                     </div>
                                 <?php endforeach; ?>
                             </div>
 
                             <div class="form-actions">
-                                <button type="button" class="btn-secondary" onclick="window.history.back()">Cancel</button>
-                                <button type="submit" class="btn-primary">Submit All Reviews</button>
+                                <button type="button" class="btn-secondary" onclick="window.location.href='profile.php#orders'">Cancel</button>
+                                <?php 
+                                // Check if there are any unreviewed games
+                                $has_unreviewed = false;
+                                foreach ($order_details as $item) {
+                                    if (!$item['existing_review_id']) {
+                                        $has_unreviewed = true;
+                                        break;
+                                    }
+                                }
+                                ?>
+                                
+                                <?php if ($has_unreviewed): ?>
+                                    <button type="submit" class="btn-primary">Submit Reviews</button>
+                                <?php else: ?>
+                                    <div class="all-reviewed-message">
+                                        <span>✅ You've already reviewed this game</span>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </form>
 
@@ -369,7 +427,7 @@ if (empty($order_details)) {
             const hasValidRating = ratings.some(rating => parseInt(rating) > 0);
             
             if (!hasValidRating) {
-                showNotification('Please rate at least one game before submitting', 'error');
+                showNotification('Please pick the rating stars first!', 'error');
                 return;
             }
             
@@ -382,7 +440,7 @@ if (empty($order_details)) {
                 if (data.success) {
                     showNotification(data.message, 'success');
                     setTimeout(() => {
-                        window.location.href = 'profile.php';
+                        window.location.href = 'profile.php#orders';
                     }, 2000);
                 } else {
                     showNotification(data.message, 'error');
