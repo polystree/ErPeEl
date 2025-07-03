@@ -174,7 +174,7 @@ INSERT INTO `produk` (`id`, `kategori_id`, `nama`, `detail`, `pengembang`, `foto
 (13, 2, 'Divinity: Original Sin 2', 'The critically acclaimed role-playing game with turn-based combat and deep story.', 'Larian Studios', 'divinityOriginalSin2.png', 44.99, 17.99, 0),
 (14, 5, 'Age of Empires IV', 'Classic real-time strategy returns to glory with new civilizations and mechanics.', 'Relic Entertainment', 'ageOfEmpires4.png', 39.99, NULL, 0),
 (15, 6, 'Cities: Skylines', 'A modern take on the classic city simulation. Design, build, and manage the city of your dreams.', 'Colossal Order', 'citiesSkyline.png', 29.99, 8.99, 0),
-(16, 6, 'Anno 1800', 'Lead the Industrial Revolution and build a sprawling metropolis in this city-builder RTS.', 'Ubisoft Mainz', 'anno1800.png', 59.99, 14.99, 0),
+(16, 6, 'Anno 1800', 'Lead the Industrial Revolution and build a sprawling metropolis in this city-builder RTS.', 'Ubisoft Mainz', 'anno1880.png', 59.99, 14.99, 0),
 (17, 7, 'XCOM 2', 'Lead the resistance against an alien occupation in this turn-based tactics video game.', 'Firaxis Games', 'xcom2.png', 59.99, 5.99, 0),
 (18, 6, 'Tropico 6', 'Rule your own banana republic as El Presidente in this construction and management simulation.', 'Limbic Entertainment', 'tropico6.png', 39.99, 15.99, 0),
 (19, 8, 'The Sims 4: Starter Edition', 'The ultimate life simulation game where you can create and control people.', 'Maxis', 'thesims4.png', 9.99, 4.99, 1),
