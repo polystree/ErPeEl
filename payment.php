@@ -94,6 +94,12 @@ if (isset($_POST['payment_form'])) {
     if (!mysqli_query($con, $query_order_item)) {
       die("Error: Gagal memasukkan detail pesanan. " . mysqli_error($con));
     }
+
+    // Update the sold count for this product
+    $update_sold = "UPDATE produk SET sold = sold + 1 WHERE id = '$produk_id'";
+    if (!mysqli_query($con, $update_sold)) {
+      die("Error: Gagal mengupdate jumlah terjual. " . mysqli_error($con));
+    }
   }
 
   // Clear cart

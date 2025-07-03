@@ -127,7 +127,7 @@ CREATE TABLE IF NOT EXISTS `produk` (
   `foto` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `harga` double DEFAULT NULL,
   `harga_diskon` double DEFAULT NULL,
-  `sold` int DEFAULT NULL,
+  `sold` int NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   KEY `kategori_id` (`kategori_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

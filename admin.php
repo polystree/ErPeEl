@@ -52,7 +52,7 @@ $user_data = $user_result->fetch_assoc();
     <nav class="navbar" role="navigation" aria-label="Main navigation">
         <div class="upper-nav">
             <div class="logo">
-                <a href="dashboard.php" aria-label="Back to home">Vault</a>
+                <a href="admin.php" aria-label="Back to home">Vault</a>
             </div>
             
             <button class="mobile-menu-toggle" aria-label="Toggle mobile menu" aria-expanded="false" onclick="toggleMobileMenu()">
@@ -62,33 +62,6 @@ $user_data = $user_result->fetch_assoc();
             <div class="menu" role="menubar" id="mobile-menu">
                 <a href="admin.php" class="menu-item" role="menuitem">Manage Games</a>
                 <a href="order.php" class="menu-item" role="menuitem">Order Management</a>
-            </div>
-
-            <div class="search-bar" role="search">
-                <form method="GET" action="search.php">
-                    <input type="text" name="query" id="search-input" placeholder="Search Games" class="search-input" aria-label="Enter game search keywords">
-                    <button type="submit" class="search-icon" aria-label="Start search">
-                        <img src="image/search-btn.svg" class="search-img" alt="" width="16" height="16">
-                    </button>
-                </form>
-            </div>
-
-            <div class="nav-icons">
-                <div class="nav-icon">
-                    <a href="cart.php" aria-label="View shopping cart">
-                        <img src="image/cart-btn.svg" class="icon-img" alt="" width="20" height="20">
-                    </a>
-                </div>
-
-                <div class="nav-icon profile">
-                    <a href="profile.php" aria-label="View user profile">
-                        <?php if (!empty($user_data['foto']) && file_exists("image/" . $user_data['foto'])): ?>
-                            <img src="image/<?php echo htmlspecialchars($user_data['foto']); ?>" class="icon-img profile-avatar" alt="" width="44" height="44" style="border-radius: 50%; object-fit: cover; filter: none; width: 44px; height: 44px;">
-                        <?php else: ?>
-                            <img src="image/profile white.svg" class="icon-img" alt="" width="20" height="20">
-                        <?php endif; ?>
-                    </a>
-                </div>
             </div>
         </div>
     </nav>
@@ -116,6 +89,13 @@ $user_data = $user_result->fetch_assoc();
         <!-- Page Title -->
         <h1 class="admin-title">Manage Games <span class="games-count"><?php echo $jumlahproduk; ?></span></h1>
 
+        <!-- Add Product Button - Moved to top -->
+        <div class="add-product-section" style="margin-bottom: 2rem;">
+            <button type="button" class="add-product-btn">
+                <a href="tambah-game.php">Add New Game</a>
+            </button>
+        </div>
+
         <!-- Products Table -->
         <div class="products-container">
             <table class="products-table">
@@ -126,13 +106,14 @@ $user_data = $user_result->fetch_assoc();
                         <th>Developer</th>
                         <th>Category</th>
                         <th>Price</th>
+                        <th>Sold</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if ($jumlahproduk == 0): ?>
                         <tr>
-                            <td colspan="6" class="empty-state">
+                            <td colspan="7" class="empty-state">
                                 <div class="empty-state-icon">🎮</div>
                                 <p>No games available.</p>
                             </td>
@@ -163,6 +144,9 @@ $user_data = $user_result->fetch_assoc();
                                     }
                                 ?>
                             </td>
+                            <td class="sold-count">
+                                <?php echo number_format($data['sold']); ?>
+                            </td>
                             <td>
                                 <a href="edit-game.php?id=<?php echo $data['id']; ?>" class="edit-btn">
                                     Edit
@@ -173,13 +157,6 @@ $user_data = $user_result->fetch_assoc();
                     <?php endif; ?>
                 </tbody>
             </table>
-        </div>
-
-        <!-- Add Product Button -->
-        <div class="add-product-section">
-            <button type="button" class="add-product-btn">
-                <a href="tambah-game.php">Add New Game</a>
-            </button>
         </div>
     </div>
     
