@@ -207,7 +207,7 @@ function generateStarRating($avg_rating) {
                             <?php endif; ?>
                         </p>
                         <div style="display: flex; gap: var(--space-md); margin-top: var(--space-md);">
-                            <a href="profile.php" style="
+                            <a href="profile.php#orders" style="
                                 background: rgba(255, 255, 255, 0.2);
                                 color: white;
                                 padding: var(--space-sm) var(--space-md);

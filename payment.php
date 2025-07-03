@@ -110,7 +110,6 @@ if (isset($_POST['payment_form'])) {
 }
 ?>
 
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -250,12 +249,16 @@ if (isset($_POST['payment_form'])) {
                                     <form action="payment.php" method="POST" id="payment-form">
                                         <input type="hidden" name="payment_form" value="1">
                                         
-                                        <button type="submit" class="add-to-cart-btn" style="width: 100%; margin-bottom: var(--space-lg); justify-content: center;">
+                                        <button type="button" id="completePurchase" class="add-to-cart-btn" style="width: 100%; margin-bottom: var(--space-lg); justify-content: center;">
                                             <svg style="width: 16px; height: 16px; margin-right: var(--space-sm);" viewBox="0 0 24 24" fill="currentColor">
                                                 <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
                                             </svg>
                                             Complete Purchase
                                         </button>
+                                    </form>
+                                    
+                                    <form action="payment.php" method="POST" id="payment-form" style="display: none;">
+                                        <input type="hidden" name="payment_form" value="1">
                                     </form>
                                     
                                     <p style="color: var(--text-secondary); font-size: 0.85rem; text-align: center; line-height: 1.4;">
@@ -323,6 +326,52 @@ if (isset($_POST['payment_form'])) {
         <span class="wishlist-message"></span>
     </div>
 
+    <!-- Payment Confirmation Modal -->
+    <div id="confirmationModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Confirm Your Purchase</h3>
+                <div id="countdownTimer" class="countdown-timer">Time remaining: 30s</div>
+            </div>
+            
+            <div class="modal-body">
+                <p style="color: var(--text-secondary); margin-bottom: var(--space-lg); line-height: 1.5;">
+                    Please review and confirm the following before completing your purchase:
+                </p>
+                
+                <div class="confirmation-checkboxes">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="confirmCorrect" class="confirmation-checkbox">
+                        <span class="checkmark"></span>
+                        I confirm this is the correct game, edition, and that it is for the Steam platform.
+                    </label>
+                    
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="confirmRequirements" class="confirmation-checkbox">
+                        <span class="checkmark"></span>
+                        I have verified the game's system requirements and that its region is compatible with my account.
+                    </label>
+                    
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="confirmRefund" class="confirmation-checkbox">
+                        <span class="checkmark"></span>
+                        I understand and agree that this digital key is non-refundable once it has been sent.
+                    </label>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" id="cancelPurchaseBtn" class="btn-secondary">Cancel</button>
+                <button type="button" id="confirmPurchaseBtn" class="add-to-cart-btn" disabled>Confirm Purchase</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Notification -->
+    <div id="paymentNotification" class="payment-notification" style="display: none;">
+        <span class="notification-message"></span>
+    </div>
+
     <footer role="contentinfo">
         <div class="footer-content">
             <div class="footer-brand">
@@ -377,10 +426,141 @@ if (isset($_POST['payment_form'])) {
         // Payment form handling
         document.addEventListener('DOMContentLoaded', function() {
             const paymentForm = document.getElementById('payment-form');
+            const completePurchaseBtn = document.getElementById('completePurchase');
+            const confirmationModal = document.getElementById('confirmationModal');
+            const confirmPurchaseBtn = document.getElementById('confirmPurchaseBtn');
+            const cancelPurchaseBtn = document.getElementById('cancelPurchaseBtn');
+            const countdownTimer = document.getElementById('countdownTimer');
+            const paymentNotification = document.getElementById('paymentNotification');
+            const checkboxes = document.querySelectorAll('.confirmation-checkbox');
             
-            // Payment form submission with loading state
+            let countdownInterval;
+            let timeRemaining = 30;
+
+            // Show modal function
+            function showModal() {
+                confirmationModal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+                startCountdown();
+            }
+
+            // Hide modal function
+            function hideModal() {
+                confirmationModal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+                stopCountdown();
+                resetModal();
+            }
+
+            // Start countdown timer
+            function startCountdown() {
+                timeRemaining = 30;
+                updateCountdownDisplay();
+                
+                countdownInterval = setInterval(() => {
+                    timeRemaining--;
+                    updateCountdownDisplay();
+                    
+                    if (timeRemaining <= 0) {
+                        hideModal();
+                        showNotification('Payment failed');
+                    }
+                }, 1000);
+            }
+
+            // Stop countdown timer
+            function stopCountdown() {
+                if (countdownInterval) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                }
+            }
+
+            // Update countdown display
+            function updateCountdownDisplay() {
+                countdownTimer.textContent = `Time remaining: ${timeRemaining}s`;
+                
+                // Change color when time is running low
+                if (timeRemaining <= 10) {
+                    countdownTimer.style.color = '#ef4444';
+                } else {
+                    countdownTimer.style.color = 'var(--primary)';
+                }
+            }
+
+            // Reset modal state
+            function resetModal() {
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                confirmPurchaseBtn.disabled = true;
+                timeRemaining = 30;
+                countdownTimer.style.color = 'var(--primary)';
+            }
+
+            // Check if all checkboxes are checked
+            function validateCheckboxes() {
+                const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
+                confirmPurchaseBtn.disabled = !allChecked;
+            }
+
+            // Show notification
+            function showNotification(message) {
+                const notificationMessage = paymentNotification.querySelector('.notification-message');
+                notificationMessage.textContent = message;
+                paymentNotification.style.display = 'block';
+                
+                // Auto-hide after 3 seconds
+                setTimeout(() => {
+                    paymentNotification.style.animation = 'fadeOut 0.3s ease-out';
+                    setTimeout(() => {
+                        paymentNotification.style.display = 'none';
+                        paymentNotification.style.animation = '';
+                    }, 300);
+                }, 3000);
+            }
+
+            // Event listeners
+            completePurchaseBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                showModal();
+            });
+
+            cancelPurchaseBtn.addEventListener('click', function() {
+                hideModal();
+            });
+
+            confirmPurchaseBtn.addEventListener('click', function() {
+                if (!this.disabled) {
+                    stopCountdown();
+                    paymentForm.submit();
+                }
+            });
+
+            // Checkbox validation
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', validateCheckboxes);
+            });
+
+            // Close modal when clicking outside
+            confirmationModal.addEventListener('click', function(e) {
+                if (e.target === confirmationModal) {
+                    hideModal();
+                }
+            });
+
+            // Keyboard support
+            document.addEventListener('keydown', function(e) {
+                if (confirmationModal.style.display === 'flex') {
+                    if (e.key === 'Escape') {
+                        hideModal();
+                    }
+                }
+            });
+            
+            // Payment form submission with loading state (legacy support)
             paymentForm.addEventListener('submit', function(e) {
-                const submitBtn = this.querySelector('button[type="submit"]');
+                const submitBtn = confirmPurchaseBtn;
                 const originalContent = submitBtn.innerHTML;
                 
                 // Show loading state
@@ -458,6 +638,193 @@ if (isset($_POST['payment_form'])) {
 
         .summary-line:last-child span {
             font-size: 1.1rem;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow: hidden;
+            animation: modalSlideIn 0.3s ease-out;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            padding: var(--space-lg) var(--space-xl);
+            border-bottom: 1px solid var(--glass-border);
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .modal-header h3 {
+            color: var(--text-primary);
+            margin: 0 0 var(--space-sm) 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .countdown-timer {
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .modal-body {
+            padding: var(--space-lg) var(--space-xl);
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .modal-body p {
+            color: var(--text-secondary);
+            margin-bottom: var(--space-md);
+            line-height: 1.4;
+            font-size: 0.9rem;
+        }
+
+        .confirmation-checkboxes {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-md);
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-sm);
+            cursor: pointer;
+            color: var(--text-primary);
+            line-height: 1.4;
+            font-size: 0.9rem;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            display: none;
+        }
+
+        .checkmark {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--glass-border);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+            margin-top: 2px;
+        }
+
+        .checkbox-label input[type="checkbox"]:checked + .checkmark {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .checkbox-label input[type="checkbox"]:checked + .checkmark::after {
+            content: '✓';
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .modal-footer {
+            padding: var(--space-lg) var(--space-xl);
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            gap: var(--space-md);
+            justify-content: flex-end;
+            flex-shrink: 0;
+        }
+
+        .btn-secondary {
+            padding: 12px 24px;
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            min-width: 140px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        .modal-footer .add-to-cart-btn {
+            min-width: 140px;
+            height: 44px;
+            transform: translateY(-16px);
+        }
+
+        .payment-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #ef4444;
+            border: 1px solid #dc2626;
+            border-radius: var(--radius-md);
+            padding: var(--space-lg);
+            color: white;
+            font-weight: 500;
+            z-index: 1001;
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
         }
 
         /* Animations */
