@@ -352,32 +352,33 @@ if (empty($order_details)) {
         <span id="notification-message"></span>
     </div>
 
-    <footer class="main-footer">
+    <footer role="contentinfo">
         <div class="footer-content">
-            <div class="footer-section">
-                <h4>Vault Digital Store</h4>
-                <p>Your premium destination for digital games</p>
+            <div class="footer-brand">
+                <h3>Vault</h3>
+                <p>Your ultimate destination for digital games</p>
             </div>
-            <div class="footer-section">
-                <h4>Quick Links</h4>
-                <ul>
-                    <li><a href="dashboard.php">Home</a></li>
-                    <li><a href="semua.php">All Games</a></li>
-                    <li><a href="baru.php">New Releases</a></li>
-                    <li><a href="promo.php">Special Offers</a></li>
-                </ul>
+            <div class="footer-links">
+                <div class="footer-section">
+                    <h4>Support</h4>
+                    <ul>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                        <li><a href="#">Community</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="#" class="privacy-policy">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                        <li><a href="#">Refund Policy</a></li>
+                    </ul>
+                </div>
             </div>
-            <div class="footer-section">
-                <h4>Account</h4>
-                <ul>
-                    <li><a href="profile.php">My Profile</a></li>
-                    <li><a href="cart.php">My Cart</a></li>
-                    <li><a href="order.php">Order History</a></li>
-                </ul>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Vault | Developed by Group 4 RPL</p>
             </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2024 Vault Digital Store. All rights reserved.</p>
         </div>
     </footer>
 
