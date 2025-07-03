@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Jul 03, 2025 at 04:22 PM
+-- Generation Time: Jul 03, 2025 at 05:33 PM
 -- Server version: 9.1.0
 -- PHP Version: 8.3.14
 
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS `cart` (
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
   KEY `produk_id` (`produk_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=226 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=234 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -91,7 +91,17 @@ CREATE TABLE IF NOT EXISTS `orders` (
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=39 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `orders`
+--
+
+INSERT INTO `orders` (`id`, `user_id`, `total`, `created_at`) VALUES
+(35, 33, 3.98, '2025-07-03 16:56:14'),
+(36, 33, 32.98, '2025-07-03 17:07:44'),
+(37, 33, 51.96, '2025-07-03 17:11:54'),
+(38, 33, 3.98, '2025-07-03 17:32:16');
 
 -- --------------------------------------------------------
 
@@ -109,7 +119,19 @@ CREATE TABLE IF NOT EXISTS `order_items` (
   PRIMARY KEY (`id`),
   KEY `order_id` (`order_id`),
   KEY `produk_id` (`produk_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=161 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=167 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `order_items`
+--
+
+INSERT INTO `order_items` (`id`, `order_id`, `produk_id`, `price`, `steam_key`) VALUES
+(161, 35, 33, 0.99, 'VAULT-A4695-8ADA5-FF4AE'),
+(162, 36, 32, 29.99, 'VAULT-58BD6-DC3E6-F14EC'),
+(163, 37, 2, 23.99, 'VAULT-09AC9-F81EA-A67D9'),
+(164, 37, 19, 4.99, 'VAULT-ACCB7-ED5FD-BB2D0'),
+(165, 37, 11, 19.99, 'VAULT-5FFC3-97C3A-AC16E'),
+(166, 38, 33, 0.99, 'VAULT-4F7A7-FA6CD-86803');
 
 -- --------------------------------------------------------
 
@@ -137,7 +159,36 @@ CREATE TABLE IF NOT EXISTS `produk` (
 --
 
 INSERT INTO `produk` (`id`, `kategori_id`, `nama`, `detail`, `pengembang`, `foto`, `harga`, `harga_diskon`, `sold`) VALUES
-(104, 13, 'CINDER', 'x', 'koh cinder', 'https://letsenhance.io/static/73136da51c245e80edc6ccfe44888a99/1015f/MainBefore.jpg', 50, 25, 0);
+(1, 2, 'Elden Ring', 'A vast world of fantasy and danger from FromSoftware, creators of the Dark Souls series.', 'FromSoftware', 'eldenRing.png', 59.99, NULL, 0),
+(2, 2, 'Tales of Arise', 'A story of liberation, featuring a vibrant world, dynamic combat, and a compelling cast of characters.', 'Bandai Namco', 'talesOfArise.avif', 59.99, 23.99, 1),
+(3, 10, 'Persona 5 Royal', 'The definitive edition of the award-winning RPG, featuring new characters, story, and locations.', 'ATLUS', 'persona5Royal.png', 59.99, NULL, 0),
+(4, 8, 'Animal Crossing: New Horizons', 'Escape to a deserted island and create your own paradise. A relaxing life simulation game.', 'Nintendo', 'animalCrossing.png', 59.99, NULL, 0),
+(5, 5, 'Company of Heroes 3', 'The legendary strategy franchise is back! A cinematic WWII experience awaits.', 'Relic Entertainment', 'companyOfHeroes3.png', 59.99, 29.99, 0),
+(6, 4, 'Super Mario Odyssey', 'Explore huge 3D kingdoms filled with secrets and surprises, using Mario\'s new abilities.', 'Nintendo', 'superMarioOdyssey.png', 59.99, NULL, 0),
+(7, 2, 'Avatar: Frontiers of Pandora', 'Explore the breathtaking Western Frontier of Pandora in this first-person action-adventure.', 'Ubisoft', 'avatar.png', 69.99, 41.99, 0),
+(8, 2, 'The Witcher 3: Wild Hunt', 'A story-driven, open-world RPG set in a visually stunning fantasy universe.', 'CD PROJEKT RED', 'theWitcher3.png', 39.99, 9.99, 0),
+(9, 2, 'Sekiro: Shadows Die Twice', 'Carve your own clever path to vengeance in this award-winning action-adventure game.', 'FromSoftware', 'sekiro.png', 59.99, 29.99, 0),
+(10, 2, 'Dark Souls III', 'An action RPG set in a hauntingly beautiful, dark world. Prepare to die.', 'FromSoftware', 'darkSoul3.png', 59.99, 29.99, 0),
+(11, 2, 'Bloodborne', 'Hunt your nightmares in the ancient city of Yharnam, a place cursed with a strange endemic illness.', 'FromSoftware', 'bloodborne.png', 19.99, NULL, 1),
+(12, 1, 'DOOM Eternal', 'Rip and tear through demonic hordes in the ultimate formula for first-person combat.', 'id Software', 'doomEternal.png', 39.99, 9.99, 0),
+(13, 2, 'Divinity: Original Sin 2', 'The critically acclaimed role-playing game with turn-based combat and deep story.', 'Larian Studios', 'divinityOriginalSin2.png', 44.99, 17.99, 0),
+(14, 5, 'Age of Empires IV', 'Classic real-time strategy returns to glory with new civilizations and mechanics.', 'Relic Entertainment', 'ageOfEmpires4.png', 39.99, NULL, 0),
+(15, 6, 'Cities: Skylines', 'A modern take on the classic city simulation. Design, build, and manage the city of your dreams.', 'Colossal Order', 'citiesSkyline.png', 29.99, 8.99, 0),
+(16, 6, 'Anno 1800', 'Lead the Industrial Revolution and build a sprawling metropolis in this city-builder RTS.', 'Ubisoft Mainz', 'anno1800.png', 59.99, 14.99, 0),
+(17, 7, 'XCOM 2', 'Lead the resistance against an alien occupation in this turn-based tactics video game.', 'Firaxis Games', 'xcom2.png', 59.99, 5.99, 0),
+(18, 6, 'Tropico 6', 'Rule your own banana republic as El Presidente in this construction and management simulation.', 'Limbic Entertainment', 'tropico6.png', 39.99, 15.99, 0),
+(19, 8, 'The Sims 4: Starter Edition', 'The ultimate life simulation game where you can create and control people.', 'Maxis', 'thesims4.png', 9.99, 4.99, 1),
+(20, 17, 'Hollow Knight', 'A challenging and atmospheric 2D action-adventure. Explore a vast, ruined kingdom of insects.', 'Team Cherry', 'hollowKnight.png', 14.99, NULL, 0),
+(21, 17, 'Stardew Valley', 'You\'ve inherited your grandfather\'s old farm plot. Create the farm of your dreams!', 'ConcernedApe', 'stardew.png', 14.99, NULL, 0),
+(22, 17, 'Celeste', 'A narrative-driven, single-player adventure about climbing a mountain, with charming characters.', 'Maddy Makes Games', 'celeste.png', 19.99, 4.99, 0),
+(23, 17, 'Spiritfarer', 'A cozy management game about dying. Build a boat to explore the world, then befriend and care for spirits.', 'Thunder Lotus Games', 'spiritfarer.png', 29.99, 7.49, 0),
+(24, 4, 'Ori and the Blind Forest: Definitive Edition', 'A visually stunning action-platformer with a deeply emotional story.', 'Moon Studios', 'oriAndTheBlindForest.png', 19.99, 4.99, 0),
+(28, 1, 'Counter-Strike 2 (Prime Status)', 'The next evolution of the world\'s most popular tactical shooter. Includes Prime Status.', 'Valve', 'modernCs2.png', 14.99, NULL, 0),
+(29, 3, 'PUBG: BATTLEGROUNDS', 'The original battle royale game. Land, loot, and survive to become the last one standing.', 'KRAFTON, Inc.', 'pubg.png', 29.99, 9.89, 0),
+(30, 9, 'Final Fantasy XIV: Complete Edition', 'Join millions of adventurers in Eorzea. Includes the base game and all expansions.', 'Square Enix', 'finalFantasyXIV.png', 59.99, 29.99, 0),
+(31, 9, 'The Elder Scrolls Online: Standard Edition', 'Join over 22 million players in the award-winning online multiplayer RPG.', 'ZeniMax Online', 'theElderScrolls.png', 19.99, 5.99, 0),
+(32, 9, 'Guild Wars 2: Heroic Edition', 'An online role-playing game with fast-paced action combat and a rich story.', 'ArenaNet', 'guildWars2.png', 29.99, NULL, 1),
+(33, 9, 'Black Desert Online', 'A revolutionary MMORPG that delivers intense, fast-paced combat and a vast open world.', 'Pearl Abyss', 'blackDesertOnline.png', 9.99, 0.99, 2);
 
 -- --------------------------------------------------------
 
@@ -156,7 +207,16 @@ CREATE TABLE IF NOT EXISTS `rating` (
   PRIMARY KEY (`id`),
   KEY `produk_id` (`produk_id`),
   KEY `user_id` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=288 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=291 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `rating`
+--
+
+INSERT INTO `rating` (`id`, `produk_id`, `user_id`, `rating`, `comment`, `created_at`) VALUES
+(288, 33, 33, 5, '', '2025-07-03 16:56:36'),
+(289, 11, 33, 5, '', '2025-07-03 17:12:03'),
+(290, 32, 33, 5, 'KEREN BANGET GAMENYA', '2025-07-03 17:15:37');
 
 -- --------------------------------------------------------
 
