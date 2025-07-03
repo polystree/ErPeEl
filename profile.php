@@ -374,14 +374,28 @@ if (isset($_POST['logout'])) {
                                         </div>
                                         <h3 class="game-title"><?php echo htmlspecialchars($fetch_wishlist['nama']); ?></h3>
                                         <p class="game-developer"><?php echo htmlspecialchars($fetch_wishlist['pengembang']); ?></p>
+                                        <?php
+                                        $cart_check = mysqli_query($con, "SELECT COUNT(*) as count FROM cart WHERE user_id = '$user_id' AND produk_id = '$produk_id'");
+                                        $is_in_cart = mysqli_fetch_assoc($cart_check)['count'] > 0;
+                                        ?>
+                                        <button class="add-to-cart-btn <?php echo $is_in_cart ? 'added' : ''; ?>" 
+                                                data-product-id="<?php echo $produk_id; ?>"
+                                                data-in-cart="<?php echo $is_in_cart ? 'true' : 'false'; ?>"
+                                                onclick="event.stopPropagation(); addToCart(<?php echo $produk_id; ?>);">
+                                            <?php echo $is_in_cart ? 'Added' : 'Add to Cart'; ?>
+                                        </button>
                                     </div>
                                 </div>
                             <?php endwhile; ?>
                         </div>
                     <?php else: ?>
                         <div class="empty-message" style="text-align: center; padding: var(--space-2xl);">
-                            <svg style="width: 64px; height: 64px; margin-bottom: var(--space-lg); opacity: 0.5;" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                            <svg style="width: 64px; height: 64px; margin-bottom: var(--space-lg); opacity: 0.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14,2 14,8 20,8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                                <polyline points="10,9 9,9 8,9"/>
                             </svg>
                             <h3 style="margin-bottom: var(--space-md);">Your wishlist is empty</h3>
                             <p style="margin-bottom: var(--space-lg);">Browse our collection and add games to your wishlist</p>
@@ -771,6 +785,87 @@ if (isset($_POST['logout'])) {
             .finally(() => {
                 button.disabled = false;
             });
+        }
+
+        // Add to cart functionality - matching dashboard pattern exactly
+        function addToCart(gameId) {
+            const button = event.target;
+            const originalText = button.textContent;
+            const isInCart = button.getAttribute("data-in-cart") === "true";
+            const newStatus = !isInCart;
+            
+            // Update button state immediately for better UX
+            button.disabled = true;
+            button.textContent = isInCart ? 'Removing...' : 'Adding...';
+            button.setAttribute("data-in-cart", newStatus.toString());
+            button.classList.toggle('added', newStatus);
+
+            fetch("ajax_handler.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: `action=add_to_cart&produk_id=${gameId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(data.message, 'success');
+                    updateCartCount(); // Update cart counter
+                    
+                    // Update button text based on action
+                    if (data.action === 'added') {
+                        button.textContent = 'Added';
+                        button.classList.add('added');
+                        button.setAttribute("data-in-cart", "true");
+                    } else if (data.action === 'removed') {
+                        button.textContent = 'Add to Cart';
+                        button.classList.remove('added');
+                        button.setAttribute("data-in-cart", "false");
+                    }
+                } else {
+                    // Revert UI changes on error
+                    button.setAttribute("data-in-cart", isInCart.toString());
+                    button.classList.toggle('added', isInCart);
+                    button.textContent = originalText;
+                    showNotification(data.message || "Failed to update cart", "error");
+                }
+            })
+            .catch((error) => {
+                console.error("Cart error:", error);
+                // Revert UI changes on error
+                button.setAttribute("data-in-cart", isInCart.toString());
+                button.classList.toggle('added', isInCart);
+                button.textContent = originalText;
+                showNotification("Network error. Please try again.", "error");
+            })
+            .finally(() => {
+                button.disabled = false;
+            });
+        }
+
+        // Update cart count in navbar - matching dashboard
+        function updateCartCount() {
+            fetch("ajax_handler.php?action=get_cart_count")
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const cartIcon = document.querySelector('.nav-icon a[href="cart.php"]');
+                    if (cartIcon) {
+                        // Remove existing badge
+                        const existingBadge = cartIcon.querySelector('.cart-badge');
+                        if (existingBadge) existingBadge.remove();
+                        
+                        // Add new badge if count > 0
+                        if (data.count > 0) {
+                            const badge = document.createElement('span');
+                            badge.className = 'cart-badge';
+                            badge.textContent = data.count > 99 ? '99+' : data.count;
+                            cartIcon.style.position = 'relative';
+                            cartIcon.appendChild(badge);
+                        }
+                    }
+                }
+            })
+            .catch(error => console.error("Error updating cart count:", error));
         }
 
         // Order details functionality

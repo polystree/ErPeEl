@@ -215,7 +215,7 @@ $result_reviews = $stmt->get_result();
                 </div>
 
                 <div class="nav-icon profile">
-                    <a href="profile.php" aria-label="View user profile">
+                    <a href="profile.php#profile" aria-label="View user profile">
                         <?php if ($foto): ?>
                             <img src="image/<?php echo $foto; ?>" class="icon-img profile-avatar" alt="" width="44" height="44" style="border-radius: 50%; object-fit: cover; filter: none; width: 44px; height: 44px;">
                         <?php else: ?>
@@ -236,7 +236,7 @@ $result_reviews = $stmt->get_result();
                         <li><a href="dashboard.php">Back to Home</a></li>
                         <li><a href="semua.php">Browse All Games</a></li>
                         <li><a href="cart.php">My Cart</a></li>
-                        <li><a href="profile.php">My Profile</a></li>
+                        <li><a href="profile.php#profile">My Profile</a></li>
                     </ul>
                 </div>
                 <div class="category-section">
@@ -433,29 +433,31 @@ $result_reviews = $stmt->get_result();
                     <div class="section-header">
                         <h2 class="section-title" id="reviews-title">User Reviews</h2>
                         <span class="review-count"><?php echo mysqli_num_rows($result_reviews); ?> reviews</span>
+                    </div>
                         
-                        <?php if ($has_purchased && $last_order_id): ?>
-                            <?php if ($has_reviewed): ?>
-                                <!-- User has already reviewed -->
-                                <div class="user-review-status">
-                                    <span class="reviewed-badge">✅ You reviewed this game (<?php echo $user_review['rating']; ?>/5)</span>
-                                </div>
-                            <?php else: ?>
-                                <!-- User can write a review -->
+                    <?php if ($has_purchased && $last_order_id): ?>
+                        <?php if ($has_reviewed): ?>
+                            <!-- User has already reviewed -->
+                            <div class="user-review-status">
+                                <span class="reviewed-badge">✅ You reviewed this game (<?php echo $user_review['rating']; ?>/5)</span>
+                            </div>
+                        <?php else: ?>
+                            <!-- User can write a review -->
+                            <div class="user-review-status">
                                 <a href="reviewrate.php?order_id=<?php echo $last_order_id; ?>&produk_id=<?php echo $fetch_produk['id']; ?>"
                                     class="detail-review-btn"
                                     role="button"
                                     aria-label="Write a review for this game">
-                                    Write a Review
+                                    📝 Write a Review
                                 </a>
-                            <?php endif; ?>
-                        <?php elseif (!$has_purchased): ?>
-                            <!-- User hasn't purchased the game -->
-                            <div class="review-restriction">
-                                <span class="purchase-required">Purchase this game to write a review</span>
                             </div>
                         <?php endif; ?>
-                    </div>
+                    <?php elseif (!$has_purchased): ?>
+                        <!-- User hasn't purchased the game -->
+                        <div class="review-restriction">
+                            <span class="purchase-required">🛒 Purchase this game to write a review</span>
+                        </div>
+                    <?php endif; ?>
 
                     <div class="reviews-container">
                         <?php
