@@ -1300,9 +1300,29 @@ if (isset($_POST['logout'])) {
 
         // Initialize the first section as active
         document.addEventListener('DOMContentLoaded', () => {
-            const firstSection = document.getElementById('profile');
-            if (firstSection) {
-                firstSection.classList.add('active');
+            // Check if there's a hash in the URL (e.g., #orders)
+            const hash = window.location.hash.substring(1); // Remove the # symbol
+            
+            if (hash && document.getElementById(hash)) {
+                // If there's a valid hash, activate that section
+                const targetSection = document.getElementById(hash);
+                const targetLink = document.querySelector(`[data-section="${hash}"]`);
+                
+                // Remove active class from all sections and links
+                document.querySelectorAll('.game-sections').forEach(section => section.classList.remove('active'));
+                document.querySelectorAll('.category-link').forEach(link => link.classList.remove('active'));
+                
+                // Activate the target section and link
+                targetSection.classList.add('active');
+                if (targetLink) {
+                    targetLink.classList.add('active');
+                }
+            } else {
+                // Default to profile section if no hash or invalid hash
+                const firstSection = document.getElementById('profile');
+                if (firstSection) {
+                    firstSection.classList.add('active');
+                }
             }
         });
     </script>
