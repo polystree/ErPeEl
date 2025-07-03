@@ -156,8 +156,8 @@ if (isset($_POST['action']) && $_POST['action'] === 'get_order_items') {
     
     // Get order items with product details
     $items_query = mysqli_query($con, "
-        SELECT oi.price, oi.steam_key,
-               p.nama, p.foto, p.pengembang, p.harga, p.harga_diskon
+        SELECT oi.produk_id, oi.order_id, oi.price, oi.steam_key,
+            p.nama, p.foto, p.pengembang, p.harga, p.harga_diskon
         FROM order_items oi
         JOIN produk p ON oi.produk_id = p.id
         WHERE oi.order_id = '$order_id'

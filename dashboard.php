@@ -15,7 +15,7 @@ $user_id = $_SESSION['user_id'];
 // Get user info for navbar
 $user_query = mysqli_query($con, "SELECT foto FROM `users` WHERE id = '$user_id'");
 $user_data = mysqli_fetch_assoc($user_query);
-$user_foto = $user_data ? $user_data['foto'] : null;
+$foto = $user_data ? $user_data['foto'] : null;
 
 // Check for payment success notification
 $payment_success = false;
@@ -100,9 +100,13 @@ function generateStarRating($avg_rating) {
 
             <div class="menu" role="menubar" id="mobile-menu">
                 <a href="semua.php" class="menu-item" role="menuitem">All Games</a>
-            </div>            <div class="search-bar" role="search">
+                <a href="baru.php" class="menu-item" role="menuitem">New Releases</a>
+                <a href="promo.php" class="menu-item" role="menuitem">Special Offers</a>
+            </div>
+
+            <div class="search-bar" role="search">
                 <form method="GET" action="search.php">
-                    <input type="text" name="query" id="search-input" placeholder="Search Games" class="search-input" aria-label="Enter game search keywords">
+                    <input type="text" name="query" placeholder="Search Games" class="search-input" aria-label="Enter game search keywords">
                     <button type="submit" class="search-icon" aria-label="Start search">
                         <img src="image/search-btn.svg" class="search-img" alt="" width="16" height="16">
                     </button>
@@ -113,13 +117,20 @@ function generateStarRating($avg_rating) {
                 <div class="nav-icon">
                     <a href="cart.php" aria-label="View shopping cart">
                         <img src="image/cart-btn.svg" class="icon-img" alt="" width="20" height="20">
+                        <?php
+                        $cart_count_query = mysqli_query($con, "SELECT COUNT(*) as count FROM `cart` WHERE user_id = '$user_id'");
+                        $cart_count = mysqli_fetch_assoc($cart_count_query)['count'];
+                        if ($cart_count > 0) {
+                            echo '<span class="cart-badge">' . ($cart_count > 99 ? '99+' : $cart_count) . '</span>';
+                        }
+                        ?>
                     </a>
                 </div>
 
                 <div class="nav-icon profile">
                     <a href="profile.php" aria-label="View user profile">
-                        <?php if ($user_foto): ?>
-                            <img src="image/<?php echo $user_foto; ?>" class="icon-img profile-avatar" alt="" width="44" height="44" style="border-radius: 50%; object-fit: cover; filter: none; width: 44px; height: 44px;">
+                        <?php if ($foto): ?>
+                            <img src="image/<?php echo $foto; ?>" class="icon-img profile-avatar" alt="" width="44" height="44" style="border-radius: 50%; object-fit: cover; filter: none; width: 44px; height: 44px;">
                         <?php else: ?>
                             <img src="image/profile white.svg" class="icon-img" alt="" width="20" height="20">
                         <?php endif; ?>
@@ -127,7 +138,8 @@ function generateStarRating($avg_rating) {
                 </div>
             </div>
         </div>
-    </nav>    <main class="main-content" id="main-content">
+    </nav>    
+    <main class="main-content" id="main-content">
         <?php if ($payment_success): ?>
             <div class="payment-success-banner" style="
                 position: relative;

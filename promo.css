@@ -1,5 +1,5 @@
 /* Special Offers Page Styles */
-@import url('dashboard.css');
+@import url('search.css');
 
 /* Page Header */
 .page-header {
@@ -89,6 +89,39 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   box-shadow: 0 2px 8px rgba(225, 29, 72, 0.3);
+}
+
+/* Promo-specific enhancements */
+.promo-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  z-index: 2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.new-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  z-index: 2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* Wishlist Button */
@@ -224,6 +257,38 @@
   color: var(--text-primary);
   font-weight: 600;
   font-size: 0.9rem;
+}
+
+/* Enhanced sidebar for promo page */
+.categories-sidebar .category-section h4.category-main {
+  color: #ffffff;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.categories-sidebar .category-list li span {
+  display: block;
+  padding: 0.5rem 0;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  transition: color 0.3s ease;
+}
+
+/* Promo page specific header styling */
+.search-header .section-title {
+  color: #ffffff;
+  background: none;
+  -webkit-background-clip: unset;
+  -webkit-text-fill-color: unset;
+  background-clip: unset;
+}
+
+/* Enhanced discount badge for promo page */
+.game-cover-container .discount-badge {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  font-weight: 700;
+  font-size: 0.75rem;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
 }
 
 /* Responsive Design */

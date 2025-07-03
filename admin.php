@@ -23,6 +23,10 @@ $sql = "SELECT p.*, k.nama as kategori_nama
 $result = $con->query($sql);
 $jumlahproduk = $result->num_rows;
 
+$user_id = $_SESSION['user_id'];
+$user_query = mysqli_query($con, "SELECT foto FROM `users` WHERE id = '$user_id'");
+$user_data = mysqli_fetch_assoc($user_query);
+$foto = $user_data ? $user_data['foto'] : null;
 // Get user info
 $user_id = $_SESSION['user_id'];
 $user_sql = "SELECT * FROM users WHERE id = ?";
@@ -72,7 +76,11 @@ $user_data = $user_result->fetch_assoc();
         <div class="admin-header">
             <div class="admin-info">
                 <div class="admin-avatar">
-                    <?php echo strtoupper(substr($user_data['username'] ?? 'A', 0, 1)); ?>
+                    <?php if ($foto): ?>
+                        <img src="image/<?php echo $foto; ?>" class="icon-img profile-avatar" alt="" width="44" height="44" style="border-radius: 50%; object-fit: cover; filter: none; width: 44px; height: 44px;">
+                    <?php else: ?>
+                        <img src="image/profile white.svg" class="icon-img" alt="" width="20" height="20">
+                    <?php endif; ?>
                 </div>
                 <div class="admin-details">
                     <h2><?php echo htmlspecialchars($user_data['username'] ?? 'Admin'); ?></h2>
@@ -87,14 +95,13 @@ $user_data = $user_result->fetch_assoc();
         </div>
 
         <!-- Page Title -->
-        <h1 class="admin-title">Manage Games <span class="games-count"><?php echo $jumlahproduk; ?></span></h1>
-
-        <!-- Add Product Button - Moved to top -->
-        <div class="add-product-section" style="margin-bottom: 2rem;">
+        <h1 class="admin-title">
+            <div> Manage Games 
+            <span class="games-count"><?php echo $jumlahproduk; ?></span> </div>
             <button type="button" class="add-product-btn">
                 <a href="tambah-game.php">Add New Game</a>
             </button>
-        </div>
+        </h1>
 
         <!-- Products Table -->
         <div class="products-container">
@@ -159,37 +166,6 @@ $user_data = $user_result->fetch_assoc();
             </table>
         </div>
     </div>
-    
-    <!-- Footer -->
-    <footer role="contentinfo">
-        <div class="footer-content">
-            <div class="footer-brand">
-                <h3>Vault</h3>
-                <p>Your ultimate destination for digital games</p>
-            </div>
-            <div class="footer-links">
-                <div class="footer-section">
-                    <h4>Support</h4>
-                    <ul>
-                        <li><a href="#">Help Center</a></li>
-                        <li><a href="#">Contact Us</a></li>
-                        <li><a href="#">Community</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h4>Legal</h4>
-                    <ul>
-                        <li><a href="#" class="privacy-policy">Privacy Policy</a></li>
-                        <li><a href="#">Terms of Service</a></li>
-                        <li><a href="#">Refund Policy</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2025 Vault | Developed by Group 4 RPL</p>
-            </div>
-        </div>
-    </footer>
 
     <script>
         function toggleMobileMenu() {

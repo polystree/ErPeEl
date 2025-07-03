@@ -236,6 +236,30 @@
     opacity: 0.7;
     cursor: not-allowed;
 }
+/* Review Button */
+.detail-review-btn {
+    flex: 1;
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    background: var(--accent, #6366f1);
+    color: white;
+    border: none;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    text-align: center;
+    margin-bottom: var(--space-xl);
+}
+.detail-review-btn:hover {
+    background: var(--accent-light, #818cf8);
+    transform: translateY(-2px);
+}
 
 /* Right Section: Game Info + Description + Rating + Recent Reviews */
 .detail-right-section {

@@ -1,4 +1,4 @@
-@import url('dashboard.css');
+@import url('search.css');
 
 /* New Releases Page Specific Styles */
 .page-header {
@@ -84,23 +84,18 @@
 /* New Badge */
 .new-badge {
     position: absolute;
-    top: 12px;
-    left: 12px;
-    background: linear-gradient(135deg, var(--accent-color), #ff6b35);
+    top: 8px;
+    left: 8px;
+    background: linear-gradient(135deg, #10b981, #059669);
     color: white;
-    padding: 0.4rem 0.8rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 700;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
     letter-spacing: 0.5px;
-    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
     z-index: 2;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .wishlist-btn {
@@ -294,6 +289,30 @@
     color: var(--text-primary);
     font-weight: 600;
     font-size: 1rem;
+}
+
+/* Enhanced sidebar for new releases page */
+.categories-sidebar .category-section h4.category-main {
+  color: #ffffff;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.categories-sidebar .category-list li span {
+  display: block;
+  padding: 0.5rem 0;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  transition: color 0.3s ease;
+}
+
+/* New releases page specific header styling */
+.search-header .section-title {
+  color: #ffffff;
+  background: none;
+  -webkit-background-clip: unset;
+  -webkit-text-fill-color: unset;
+  background-clip: unset;
 }
 
 /* Responsive Design */

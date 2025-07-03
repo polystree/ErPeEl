@@ -15,7 +15,7 @@ $user_id = $_SESSION['user_id'];
 // Get user info for navbar
 $user_query = mysqli_query($con, "SELECT foto FROM `users` WHERE id = '$user_id'");
 $user_data = mysqli_fetch_assoc($user_query);
-$user_foto = $user_data ? $user_data['foto'] : null;
+$foto = $user_data ? $user_data['foto'] : null;
 
 if (isset($_GET['produk_id'])) {
     $produk_id = intval($_GET['produk_id']); 
@@ -83,6 +83,29 @@ while ($wishlist_row = mysqli_fetch_assoc($wishlist_query)) {
 // Check if product is in user's cart/wishlist
 $is_in_wishlist = in_array($fetch_produk['id'], $wishlist_ids);
 $is_in_cart = in_array($fetch_produk['id'], $cart_items);
+// Check if user purchased this product
+$purchased_query = mysqli_query($con, "
+    SELECT COUNT(*) as cnt
+    FROM `orders` o
+    JOIN `order_items` oi ON o.id = oi.order_id
+    WHERE o.user_id = '$user_id' AND oi.produk_id = '{$fetch_produk['id']}'
+");
+$purchased_data = mysqli_fetch_assoc($purchased_query);
+$has_purchased = ($purchased_data['cnt'] > 0);
+// Get last order ID containing this product for review link
+$last_order_id = null;
+if ($has_purchased) {
+    $order_query = mysqli_query($con, "
+        SELECT o.id
+        FROM `orders` o
+        JOIN `order_items` oi ON o.id = oi.order_id
+        WHERE o.user_id = '$user_id' AND oi.produk_id = '{$fetch_produk['id']}'
+        ORDER BY o.created_at DESC
+        LIMIT 1
+    ");
+    $order_row = mysqli_fetch_assoc($order_query);
+    $last_order_id = $order_row ? $order_row['id'] : null;
+}
 
 // Get average rating for this product
 $rating_data = getAverageRating($con, $fetch_produk['id']);
@@ -155,6 +178,8 @@ $result_reviews = $stmt->get_result();
 
             <div class="menu" role="menubar" id="mobile-menu">
                 <a href="semua.php" class="menu-item" role="menuitem">All Games</a>
+                <a href="baru.php" class="menu-item" role="menuitem">New Releases</a>
+                <a href="promo.php" class="menu-item" role="menuitem">Special Offers</a>
             </div>
 
             <div class="search-bar" role="search">
@@ -182,8 +207,8 @@ $result_reviews = $stmt->get_result();
 
                 <div class="nav-icon profile">
                     <a href="profile.php" aria-label="View user profile">
-                        <?php if ($user_foto): ?>
-                            <img src="image/<?php echo $user_foto; ?>" class="icon-img profile-avatar" alt="" width="44" height="44" style="border-radius: 50%; object-fit: cover; filter: none; width: 44px; height: 44px;">
+                        <?php if ($foto): ?>
+                            <img src="image/<?php echo $foto; ?>" class="icon-img profile-avatar" alt="" width="44" height="44" style="border-radius: 50%; object-fit: cover; filter: none; width: 44px; height: 44px;">
                         <?php else: ?>
                             <img src="image/profile white.svg" class="icon-img" alt="" width="20" height="20">
                         <?php endif; ?>
@@ -191,7 +216,7 @@ $result_reviews = $stmt->get_result();
                 </div>
             </div>
         </div>
-    </nav>
+    </nav> 
 
     <main class="main-content" id="main-content">
         <div class="content-layout">
@@ -306,6 +331,7 @@ $result_reviews = $stmt->get_result();
                                                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                                             </svg>
                                         </button>
+                                    <!-- Review button moved to reviews section -->
                                     </div>
                                 </div>
                             </div>
@@ -398,7 +424,15 @@ $result_reviews = $stmt->get_result();
                     <div class="section-header">
                         <h2 class="section-title" id="reviews-title">User Reviews</h2>
                         <span class="review-count"><?php echo mysqli_num_rows($result_reviews); ?> reviews</span>
+                        <?php if ($has_purchased && $last_order_id): ?>
+                        <?php endif; ?>
                     </div>
+                    <a href="reviewrate.php?order_id=<?php echo $last_order_id; ?>&produk_id=<?php echo $fetch_produk['id']; ?>"
+                        class="detail-review-btn"
+                        role="button"
+                        aria-label="Write a review for this game">
+                        Write a Review
+                    </a>
 
                     <div class="reviews-container">
                         <?php

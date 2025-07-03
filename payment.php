@@ -144,12 +144,13 @@ if (isset($_POST['payment_form'])) {
 
             <div class="menu" role="menubar" id="mobile-menu">
                 <a href="semua.php" class="menu-item" role="menuitem">All Games</a>
+                <a href="baru.php" class="menu-item" role="menuitem">New Releases</a>
+                <a href="promo.php" class="menu-item" role="menuitem">Special Offers</a>
             </div>
 
             <div class="search-bar" role="search">
                 <form method="GET" action="search.php">
-                    <input type="text" name="query" placeholder="Search Games" class="search-input" 
-                           aria-label="Enter game search keywords">
+                    <input type="text" name="query" placeholder="Search Games" class="search-input" aria-label="Enter game search keywords">
                     <button type="submit" class="search-icon" aria-label="Start search">
                         <img src="image/search-btn.svg" class="search-img" alt="" width="16" height="16">
                     </button>
@@ -160,6 +161,13 @@ if (isset($_POST['payment_form'])) {
                 <div class="nav-icon">
                     <a href="cart.php" aria-label="View shopping cart">
                         <img src="image/cart-btn.svg" class="icon-img" alt="" width="20" height="20">
+                        <?php
+                        $cart_count_query = mysqli_query($con, "SELECT COUNT(*) as count FROM `cart` WHERE user_id = '$user_id'");
+                        $cart_count = mysqli_fetch_assoc($cart_count_query)['count'];
+                        if ($cart_count > 0) {
+                            echo '<span class="cart-badge">' . ($cart_count > 99 ? '99+' : $cart_count) . '</span>';
+                        }
+                        ?>
                     </a>
                 </div>
 
@@ -174,7 +182,7 @@ if (isset($_POST['payment_form'])) {
                 </div>
             </div>
         </div>
-    </nav>
+    </nav>    
 
     <main class="main-content" role="main" aria-label="Payment section">
         <div class="payment-layout" style="max-width: 1200px; margin: 0 auto; padding: 0 var(--space-lg);">

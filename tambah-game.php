@@ -81,7 +81,7 @@ $categories_result = mysqli_query($con, $categories_query);
     <nav class="navbar" role="navigation" aria-label="Main navigation">
         <div class="upper-nav">
             <div class="logo">
-                <a href="dashboard.php" aria-label="Back to home">Vault</a>
+                <a href="admin.php" aria-label="Back to home">Vault</a>
             </div>
             
             <button class="mobile-menu-toggle" aria-label="Toggle mobile menu" aria-expanded="false" onclick="toggleMobileMenu()">
@@ -91,33 +91,6 @@ $categories_result = mysqli_query($con, $categories_query);
             <div class="menu" role="menubar" id="mobile-menu">
                 <a href="admin.php" class="menu-item" role="menuitem">Manage Games</a>
                 <a href="order.php" class="menu-item" role="menuitem">Order Management</a>
-            </div>
-
-            <div class="search-bar" role="search">
-                <form method="GET" action="search.php">
-                    <input type="text" name="query" placeholder="Search Games" class="search-input" aria-label="Enter game search keywords">
-                    <button type="submit" class="search-icon" aria-label="Start search">
-                        <img src="image/search-btn.svg" class="search-img" alt="" width="16" height="16">
-                    </button>
-                </form>
-            </div>
-
-            <div class="nav-icons">
-                <div class="nav-icon">
-                    <a href="cart.php" aria-label="View shopping cart">
-                        <img src="image/cart-btn.svg" class="icon-img" alt="" width="20" height="20">
-                    </a>
-                </div>
-
-                <div class="nav-icon profile">
-                    <a href="profile.php" aria-label="View user profile">
-                        <?php if ($user_foto): ?>
-                            <img src="image/<?php echo $user_foto; ?>" class="icon-img profile-avatar" alt="" width="44" height="44" style="border-radius: 50%; object-fit: cover; filter: none; width: 44px; height: 44px;">
-                        <?php else: ?>
-                            <img src="image/profile white.svg" class="icon-img" alt="" width="20" height="20">
-                        <?php endif; ?>
-                    </a>
-                </div>
             </div>
         </div>
     </nav>
@@ -239,37 +212,6 @@ $categories_result = mysqli_query($con, $categories_query);
             </div>
         </div>
     </main>
-  
-    <!-- Footer -->
-    <footer role="contentinfo">
-        <div class="footer-content">
-            <div class="footer-brand">
-                <h3>Vault</h3>
-                <p>Your ultimate destination for digital games</p>
-            </div>
-            <div class="footer-links">
-                <div class="footer-section">
-                    <h4>Support</h4>
-                    <ul>
-                        <li><a href="#">Help Center</a></li>
-                        <li><a href="#">Contact Us</a></li>
-                        <li><a href="#">Community</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h4>Legal</h4>
-                    <ul>
-                        <li><a href="#" class="privacy-policy">Privacy Policy</a></li>
-                        <li><a href="#">Terms of Service</a></li>
-                        <li><a href="#">Refund Policy</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2025 Vault | Developed by Group 4 RPL</p>
-            </div>
-        </div>
-    </footer>
 
     <script>
         function toggleMobileMenu() {

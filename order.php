@@ -42,8 +42,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['status'])) {
 }
 
 $query = "SELECT o.id AS order_id, o.created_at AS tanggal_pesanan, COUNT(oi.produk_id) AS jumlah, oi.price AS harga_per_unit,
-                 p.nama AS nama_produk, p.foto AS gambar_produk, o.total AS total_harga,
-                 u.username AS user_name, u.id AS user_id
+                 p.nama AS nama_produk, p.foto AS gambar_produk, o.total AS total_harga, p.harga AS base_price,
+                 u.username AS user_name, u.id AS user_id, p.pengembang AS pengembang
           FROM orders o
           JOIN order_items oi ON o.id = oi.order_id
           JOIN produk p ON oi.produk_id = p.id
@@ -79,7 +79,7 @@ if ($result && mysqli_num_rows($result) > 0) {
     <nav class="navbar" role="navigation" aria-label="Main navigation">
         <div class="upper-nav">
             <div class="logo">
-                <a href="dashboard.php" aria-label="Back to home">Vault</a>
+                <a href="admin.php" aria-label="Back to home">Vault</a>
             </div>
             
             <button class="mobile-menu-toggle" aria-label="Toggle mobile menu" aria-expanded="false" onclick="toggleMobileMenu()">
@@ -88,34 +88,7 @@ if ($result && mysqli_num_rows($result) > 0) {
 
             <div class="menu" role="menubar" id="mobile-menu">
                 <a href="admin.php" class="menu-item" role="menuitem">Manage Games</a>
-                <a href="order.php" class="menu-item active" role="menuitem">Order Management</a>
-            </div>
-
-            <div class="search-bar" role="search">
-                <form method="GET" action="search.php">
-                    <input type="text" name="query" placeholder="Search Games" class="search-input" aria-label="Enter game search keywords">
-                    <button type="submit" class="search-icon" aria-label="Start search">
-                        <img src="image/search-btn.svg" class="search-img" alt="" width="16" height="16">
-                    </button>
-                </form>
-            </div>
-
-            <div class="nav-icons">
-                <div class="nav-icon">
-                    <a href="cart.php" aria-label="View shopping cart">
-                        <img src="image/cart-btn.svg" class="icon-img" alt="" width="20" height="20">
-                    </a>
-                </div>
-
-                <div class="nav-icon profile">
-                    <a href="profile.php" aria-label="View user profile">
-                        <?php if (!empty($foto) && file_exists("image/" . $foto)): ?>
-                            <img src="image/<?php echo htmlspecialchars($foto); ?>" class="icon-img profile-avatar" alt="" width="44" height="44" style="border-radius: 50%; object-fit: cover; filter: none; width: 44px; height: 44px;">
-                        <?php else: ?>
-                            <img src="image/profile white.svg" class="icon-img" alt="" width="20" height="20">
-                        <?php endif; ?>
-                    </a>
-                </div>
+                <a href="order.php" class="menu-item" role="menuitem">Order Management</a>
             </div>
         </div>
     </nav>
@@ -135,13 +108,11 @@ if ($result && mysqli_num_rows($result) > 0) {
                         <div class="order-header">
                             <div class="order-status-info">
                                 <h3 class="order-id">Order #<?php echo $order_id; ?></h3>
-                                <span class="order-status status-1">
-                                    Processing
-                                </span>
                             </div>
                             <div class="order-actions">
-                                <!-- Status update functionality disabled for basic orders table -->
-                                <span class="text-muted">Status management requires database upgrade</span>
+                                <span class="order-status status-1">
+                                    Completed
+                                </span>
                             </div>
                         </div>
 
@@ -162,31 +133,29 @@ if ($result && mysqli_num_rows($result) > 0) {
                             </div>
                         </div>
 
-                    <div class="order-products">
-                        <h4 class="section-title">Order Items</h4>
-                        <?php foreach ($details as $detail) { ?>
-                            <div class="product-item">
-                                <div class="product-image">
-                                    <img src="image/<?php echo htmlspecialchars($detail['gambar_produk']); ?>" alt="<?php echo htmlspecialchars($detail['nama_produk']); ?>">
-                                </div>
-                                <div class="product-details">
-                                    <h5 class="product-name"><?php echo htmlspecialchars($detail['nama_produk']); ?></h5>
-                                    <div class="product-quantity">
-                                        <span class="qty-label">Quantity:</span>
-                                        <span class="qty-value"><?php echo $detail['jumlah']; ?>x</span>
-                                        <span class="unit-price">$<?php echo number_format($detail['harga_per_unit'], 2); ?></span>
+                        <div class="order-products">
+                            <h4 class="section-title">Order Items</h4>
+                            <?php foreach ($details as $detail) { ?>
+                                <div class="product-item">
+                                    <div class="product-image">
+                                        <img src="image/<?php echo htmlspecialchars($detail['gambar_produk']); ?>" alt="<?php echo htmlspecialchars($detail['nama_produk']); ?>">
+                                    </div>
+                                    <div class="product-details">
+                                        <h5 class="product-name"><?php echo htmlspecialchars($detail['nama_produk']); ?></h5>
+                                        <div class="product-pengembang">
+                                            <span class="unit-pengembang">by <?php echo htmlspecialchars($detail['pengembang'] ?? ''); ?></span>
+                                        </div>
+                                    </div>
+                                    <div class="product-total">
+                                        <span class="total-label">Total</span>
+                                        <span class="total-amount">$<?php echo number_format($detail['jumlah'] * $detail['harga_per_unit'], 2); ?></span>
                                     </div>
                                 </div>
-                                <div class="product-total">
-                                    <span class="total-label">Total</span>
-                                    <span class="total-amount">$<?php echo number_format($detail['jumlah'] * $detail['harga_per_unit'], 2); ?></span>
-                                </div>
-                            </div>
-                        <?php } ?>
-                    </div>
+                            <?php } ?>
+                        </div>
 
                     <div class="shipping-section">
-                        <h4 class="section-title">Shipping Information</h4>
+                        <h4 class="section-title">Order Information</h4>
                         <div class="shipping-card">
                             <div class="shipping-item">
                                 <span class="shipping-label">
@@ -199,12 +168,25 @@ if ($result && mysqli_num_rows($result) > 0) {
                             </div>
                             <div class="shipping-item">
                                 <span class="shipping-label">
-                                    <svg viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M12,11.5A2.5,2.5 0 0,1 9.5,9A2.5,2.5 0 0,1 12,6.5A2.5,2.5 0 0,1 14.5,9A2.5,2.5 0 0,1 12,11.5M12,2A7,7 0 0,0 5,9C5,14.25 12,22 12,22C12,22 19,14.25 19,9A7,7 0 0,0 12,2Z"/>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="800px" height="800px" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M4 7.00005L10.2 11.65C11.2667 12.45 12.7333 12.45 13.8 11.65L20 7" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                                     </svg>
-                                    Delivery Address
+                                    Email Address
                                 </span>
-                                <span class="shipping-value">Address information requires profile update</span>
+                                <span class="shipping-value">
+                                    <?php
+                                    // Fetch email for this user (if not already available)
+                                    $user_email = '';
+                                    $user_id_for_order = $details[0]['user_id'];
+                                    $email_query = mysqli_query($con, "SELECT email FROM users WHERE id = '$user_id_for_order' LIMIT 1");
+                                    if ($email_query && mysqli_num_rows($email_query) > 0) {
+                                        $user_email_row = mysqli_fetch_assoc($email_query);
+                                        $user_email = $user_email_row['email'];
+                                    }
+                                    echo htmlspecialchars($user_email);
+                                    ?>
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -213,22 +195,34 @@ if ($result && mysqli_num_rows($result) > 0) {
                         <h4 class="section-title">Payment Summary</h4>
                         <div class="payment-card">
                             <div class="payment-item">
-                                <span>Subtotal (<?php echo count($details); ?> items)</span>
-                                <span>$<?php
-                                $total_item_price = 0;
-                                foreach ($details as $detail) {
-                                    $total_item_price += ($detail['jumlah'] * $detail['harga_per_unit']);
-                                }
-                                echo number_format($total_item_price, 2);
-                                ?></span>
+                                <span>Subtotal (<?php echo count($details); ?> items) + 2.99 Fee</span>
+                                <span>
+                                    $<?php
+                                    $total_item_price = 0;
+                                    foreach ($details as $detail) {
+                                        $total_item_price += $detail['harga_per_unit'];
+                                    }
+                                    echo number_format($total_item_price + 2.99, 2);
+                                    ?>
+                                </span>
                             </div>
                             <div class="payment-item">
-                                <span>Processing Fee</span>
-                                <span>$2.99</span>
+                                <span>Tax (11%)</span>
+                                <span>
+                                    $<?php
+                                    $tax = ($total_item_price + 2.99) * 0.11;
+                                    echo number_format($tax, 2);
+                                    ?>
+                                </span>
                             </div>
                             <div class="payment-total">
                                 <span>Total Amount</span>
-                                <span>$<?php echo number_format($details[0]['total_harga'], 2); ?></span>
+                                <span>
+                                    $<?php
+                                    $total_amount = ($total_item_price + 2.99) * 1.11;
+                                    echo number_format($total_amount, 2);
+                                    ?>
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -243,37 +237,6 @@ if ($result && mysqli_num_rows($result) > 0) {
         <?php } ?>
         </div>
     </main>
-
-    <!-- Footer -->
-    <footer role="contentinfo">
-        <div class="footer-content">
-            <div class="footer-brand">
-                <h3>Vault</h3>
-                <p>Your ultimate destination for digital games</p>
-            </div>
-            <div class="footer-links">
-                <div class="footer-section">
-                    <h4>Support</h4>
-                    <ul>
-                        <li><a href="#">Help Center</a></li>
-                        <li><a href="#">Contact Us</a></li>
-                        <li><a href="#">Community</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h4>Legal</h4>
-                    <ul>
-                        <li><a href="#" class="privacy-policy">Privacy Policy</a></li>
-                        <li><a href="#">Terms of Service</a></li>
-                        <li><a href="#">Refund Policy</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2025 Vault | Developed by Group 4 RPL</p>
-            </div>
-        </div>
-    </footer>
 
     <script>
         function toggleMobileMenu() {

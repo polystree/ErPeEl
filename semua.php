@@ -15,7 +15,7 @@ $user_id = $_SESSION['user_id'];
 // Get user info for navbar
 $user_query = mysqli_query($con, "SELECT foto FROM `users` WHERE id = '$user_id'");
 $user_data = mysqli_fetch_assoc($user_query);
-$user_foto = $user_data ? $user_data['foto'] : null;
+$foto = $user_data ? $user_data['foto'] : null;
 
 // Rating function
 function getAverageRating($con, $produk_id) {
@@ -125,12 +125,13 @@ while ($wishlist_row = mysqli_fetch_assoc($wishlist_query)) {
 
             <div class="menu" role="menubar" id="mobile-menu">
                 <a href="semua.php" class="menu-item" role="menuitem">All Games</a>
+                <a href="baru.php" class="menu-item" role="menuitem">New Releases</a>
+                <a href="promo.php" class="menu-item" role="menuitem">Special Offers</a>
             </div>
 
             <div class="search-bar" role="search">
                 <form method="GET" action="search.php">
-                    <input type="text" name="query" placeholder="Search Games" class="search-input" 
-                           aria-label="Enter game search keywords">
+                    <input type="text" name="query" placeholder="Search Games" class="search-input" aria-label="Enter game search keywords">
                     <button type="submit" class="search-icon" aria-label="Start search">
                         <img src="image/search-btn.svg" class="search-img" alt="" width="16" height="16">
                     </button>
@@ -153,8 +154,8 @@ while ($wishlist_row = mysqli_fetch_assoc($wishlist_query)) {
 
                 <div class="nav-icon profile">
                     <a href="profile.php" aria-label="View user profile">
-                        <?php if ($user_foto): ?>
-                            <img src="image/<?php echo $user_foto; ?>" class="icon-img profile-avatar" alt="" width="44" height="44" style="border-radius: 50%; object-fit: cover; filter: none; width: 44px; height: 44px;">
+                        <?php if ($foto): ?>
+                            <img src="image/<?php echo $foto; ?>" class="icon-img profile-avatar" alt="" width="44" height="44" style="border-radius: 50%; object-fit: cover; filter: none; width: 44px; height: 44px;">
                         <?php else: ?>
                             <img src="image/profile white.svg" class="icon-img" alt="" width="20" height="20">
                         <?php endif; ?>
@@ -162,7 +163,7 @@ while ($wishlist_row = mysqli_fetch_assoc($wishlist_query)) {
                 </div>
             </div>
         </div>
-    </nav>    
+    </nav> 
     
     <main class="main-content" id="main-content">
         <div class="content-layout">

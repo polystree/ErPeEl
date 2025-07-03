@@ -12,10 +12,48 @@ if (!isset($_SESSION['loginbtn']) || $_SESSION['loginbtn'] == false) {
 
 $user_id = $_SESSION['user_id'];
 
+// Handle add to cart
+if (isset($_POST['add_to_cart'])) {
+    $produk_id = $_POST['produk_id'];
+    
+    // Check if item already exists in cart
+    $check_cart = mysqli_query($con, "SELECT * FROM `cart` WHERE produk_id = '$produk_id' AND user_id = '$user_id'");
+    if (mysqli_num_rows($check_cart) == 0) {
+        // Insert new item
+        $insert_cart = mysqli_query($con, "INSERT INTO `cart` (user_id, produk_id, quantity) VALUES ('$user_id', '$produk_id', 1)");
+    }
+    exit();
+}
+
+// Handle remove from cart
+if (isset($_POST['remove_from_cart'])) {
+    $produk_id = $_POST['produk_id'];
+    
+    // Remove item from cart
+    $delete_cart = mysqli_query($con, "DELETE FROM `cart` WHERE produk_id = '$produk_id' AND user_id = '$user_id'");
+    exit();
+}
+
+// Handle wishlist toggle
+if (isset($_POST['toggle_wishlist'])) {
+    $produk_id = $_POST['produk_id'];
+    
+    // Check if item exists in wishlist
+    $check_wishlist = mysqli_query($con, "SELECT * FROM `wishlist` WHERE produk_id = '$produk_id' AND user_id = '$user_id'");
+    if (mysqli_num_rows($check_wishlist) > 0) {
+        // Remove from wishlist
+        $delete_wishlist = mysqli_query($con, "DELETE FROM `wishlist` WHERE produk_id = '$produk_id' AND user_id = '$user_id'");
+    } else {
+        // Add to wishlist
+        $insert_wishlist = mysqli_query($con, "INSERT INTO `wishlist` (user_id, produk_id) VALUES ('$user_id', '$produk_id')");
+    }
+    exit();
+}
+
 // Get user info for navbar
 $user_query = mysqli_query($con, "SELECT foto FROM `users` WHERE id = '$user_id'");
 $user_data = mysqli_fetch_assoc($user_query);
-$user_foto = $user_data ? $user_data['foto'] : null;
+$foto = $user_data ? $user_data['foto'] : null;
 
 // Rating function
 function getAverageRating($con, $produk_id) {
@@ -106,34 +144,6 @@ while ($wishlist_row = mysqli_fetch_assoc($wishlist_query)) {
 
             <div class="menu" role="menubar" id="mobile-menu">
                 <a href="semua.php" class="menu-item" role="menuitem">All Games</a>
-                <div class="dropdown">
-                    <a href="#" class="menu-item dropdown-toggle" role="menuitem" aria-haspopup="true" aria-expanded="false">Categories</a>
-                    <div class="dropdown-menu" role="menu">
-                        <div class="dropdown-section">
-                            <h4>Action</h4>
-                            <ul role="none">
-                                <li><a href="kategori.php?kategori=1" role="menuitem">FPS Shooters</a></li>
-                                <li><a href="kategori.php?kategori=2" role="menuitem">Action RPG</a></li>
-                                <li><a href="kategori.php?kategori=3" role="menuitem">Battle Royale</a></li>
-                            </ul>
-                        </div>
-                        <div class="dropdown-section">
-                            <h4>Adventure</h4>
-                            <ul role="none">
-                                <li><a href="kategori.php?kategori=4" role="menuitem">Platformer</a></li>
-                                <li><a href="kategori.php?kategori=5" role="menuitem">Strategy</a></li>
-                                <li><a href="kategori.php?kategori=6" role="menuitem">City Builder</a></li>
-                            </ul>
-                        </div>
-                        <div class="dropdown-section">
-                            <h4>Strategy</h4>
-                            <ul role="none">
-                                <li><a href="kategori.php?kategori=7" role="menuitem">Turn-Based</a></li>
-                                <li><a href="kategori.php?kategori=8" role="menuitem">Life Simulation</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
                 <a href="baru.php" class="menu-item" role="menuitem">New Releases</a>
                 <a href="promo.php" class="menu-item active" role="menuitem">Special Offers</a>
             </div>
@@ -163,8 +173,8 @@ while ($wishlist_row = mysqli_fetch_assoc($wishlist_query)) {
 
                 <div class="nav-icon profile">
                     <a href="profile.php" aria-label="View user profile">
-                        <?php if ($user_foto): ?>
-                            <img src="image/<?php echo $user_foto; ?>" class="icon-img profile-avatar" alt="" width="44" height="44" style="border-radius: 50%; object-fit: cover; filter: none; width: 44px; height: 44px;">
+                        <?php if ($foto): ?>
+                            <img src="image/<?php echo $foto; ?>" class="icon-img profile-avatar" alt="" width="44" height="44" style="border-radius: 50%; object-fit: cover; filter: none; width: 44px; height: 44px;">
                         <?php else: ?>
                             <img src="image/profile white.svg" class="icon-img" alt="" width="20" height="20">
                         <?php endif; ?>
@@ -186,31 +196,13 @@ while ($wishlist_row = mysqli_fetch_assoc($wishlist_query)) {
                         <li><a href="profile.php">My Profile</a></li>
                     </ul>
                 </div>
-                <div class="category-section">
-                    <h4 class="category-main">🔥 Promo Info</h4>
-                    <ul class="category-list">
-                        <li><span style="color: #8b5cf6;">💰 Up to 70% off!</span></li>
-                        <li><span style="color: #f59e0b;">⏰ Limited time offers</span></li>
-                        <li><span style="color: #10b981;">✨ Best deals today</span></li>
-                        <li><a href="baru.php">New Releases</a></li>
-                    </ul>
-                </div>
-                <div class="category-section">
-                    <h4 class="category-main">💸 Discount Ranges</h4>
-                    <ul class="category-list">
-                        <li><span style="color: #ef4444;">90%+ discount</span></li>
-                        <li><span style="color: #f97316;">70-89% discount</span></li>
-                        <li><span style="color: #eab308;">50-69% discount</span></li>
-                        <li><span style="color: #22c55e;">25-49% discount</span></li>
-                    </ul>
-                </div>
             </aside>
             
             <div class="main-section">
                 <div class="search-header">
                     <div class="search-title-row">
                         <h1 class="section-title">
-                            🔥 Special Offers & Discounts
+                            Special Offers & Discounts
                         </h1>
                         <div class="search-filters">
                             <form method="GET" action="promo.php" class="sort-form">
@@ -303,37 +295,41 @@ while ($wishlist_row = mysqli_fetch_assoc($wishlist_query)) {
         </div>
     </main>
 
-    <!-- Notification Toast -->
-    <div id="notification-toast" class="notification-toast">
-        <span id="notification-message"></span>
+    <!-- Wishlist Notification -->
+    <div id="wishlist-notification" class="wishlist-notification" role="alert" aria-live="polite">
+        <svg class="heart-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+        <span class="wishlist-message"></span>
     </div>
 
-    <footer class="main-footer">
+    <footer role="contentinfo">
         <div class="footer-content">
-            <div class="footer-section">
-                <h4>Vault Digital Store</h4>
-                <p>Your premium destination for digital games</p>
+            <div class="footer-brand">
+                <h3>Vault</h3>
+                <p>Your ultimate destination for digital games</p>
             </div>
-            <div class="footer-section">
-                <h4>Quick Links</h4>
-                <ul>
-                    <li><a href="dashboard.php">Home</a></li>
-                    <li><a href="semua.php">All Games</a></li>
-                    <li><a href="baru.php">New Releases</a></li>
-                    <li><a href="promo.php">Special Offers</a></li>
-                </ul>
+            <div class="footer-links">
+                <div class="footer-section">
+                    <h4>Support</h4>
+                    <ul>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                        <li><a href="#">Community</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="#" class="privacy-policy">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                        <li><a href="#">Refund Policy</a></li>
+                    </ul>
+                </div>
             </div>
-            <div class="footer-section">
-                <h4>Account</h4>
-                <ul>
-                    <li><a href="profile.php">My Profile</a></li>
-                    <li><a href="cart.php">My Cart</a></li>
-                    <li><a href="order.php">Order History</a></li>
-                </ul>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Vault | Developed by Group 4 RPL</p>
             </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2024 Vault Digital Store. All rights reserved.</p>
         </div>
     </footer>
 
@@ -343,7 +339,7 @@ while ($wishlist_row = mysqli_fetch_assoc($wishlist_query)) {
             const produkId = button.dataset.produkId;
             const inWishlist = button.getAttribute("data-in-wishlist") === "true";
 
-            fetch("dashboard.php", {
+            fetch("promo.php", {
                 method: "POST",
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
                 body: `toggle_wishlist=true&produk_id=${produkId}`
@@ -352,15 +348,15 @@ while ($wishlist_row = mysqli_fetch_assoc($wishlist_query)) {
                 if (response.ok) {
                     button.setAttribute("data-in-wishlist", inWishlist ? "false" : "true");
                     button.classList.toggle("active");
+                    button.setAttribute("aria-label", inWishlist ? "Add to wishlist" : "Remove from wishlist");
                     
                     const message = inWishlist ? "Removed from wishlist" : "Added to wishlist";
-                    showNotification(message, 'success');
-                } else {
-                    showNotification("Failed to update wishlist", 'error');
+                    showWishlistNotification(message);
                 }
             })
-            .catch(() => {
-                showNotification("Network error occurred", 'error');
+            .catch(error => {
+                console.error('Error:', error);
+                showWishlistNotification("Failed to update wishlist. Please try again.");
             });
         }
 
@@ -368,51 +364,74 @@ while ($wishlist_row = mysqli_fetch_assoc($wishlist_query)) {
         function toggleCart(button) {
             const productId = button.dataset.productId;
             const inCart = button.getAttribute("data-in-cart") === "true";
+            const action = inCart ? 'remove_from_cart' : 'add_to_cart';
 
-            if (inCart) {
-                showNotification("Item already in cart", 'info');
-                return;
-            }
-
-            fetch("dashboard.php", {
+            fetch("promo.php", {
                 method: "POST", 
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: `add_to_cart=true&produk_id=${productId}&quantity=1`
+                body: `${action}=true&produk_id=${productId}`
             })
             .then(response => {
                 if (response.ok) {
-                    button.setAttribute("data-in-cart", "true");
-                    button.classList.add("added");
-                    button.textContent = "In Cart";
+                    button.setAttribute("data-in-cart", inCart ? "false" : "true");
+                    button.classList.toggle("added");
+                    button.textContent = inCart ? "Add to Cart" : "In Cart";
                     
                     // Update cart count in navbar
-                    const cartBadge = document.querySelector('.cart-badge');
-                    if (cartBadge) {
-                        const currentCount = parseInt(cartBadge.textContent) || 0;
-                        cartBadge.textContent = currentCount + 1;
-                    }
+                    updateCartCount();
                     
-                    showNotification("Added to cart successfully!", 'success');
-                } else {
-                    showNotification("Failed to add to cart", 'error');
+                    const message = inCart ? "Removed from cart" : "Added to cart successfully!";
+                    showWishlistNotification(message);
                 }
             })
-            .catch(() => {
-                showNotification("Network error occurred", 'error');
+            .catch(error => {
+                console.error('Error:', error);
+                showWishlistNotification("Failed to update cart. Please try again.");
             });
         }
 
-        // Notification system
-        function showNotification(message, type = 'info') {
-            const toast = document.getElementById('notification-toast');
-            const messageElement = document.getElementById('notification-message');
+        // Update cart count function
+        function updateCartCount() {
+            fetch('ajax_handler.php?action=get_cart_count')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const cartBadge = document.querySelector('.cart-badge');
+                        if (data.count > 0) {
+                            if (cartBadge) {
+                                cartBadge.textContent = data.count > 99 ? '99+' : data.count;
+                            } else {
+                                // Create badge if it doesn't exist
+                                const cartLink = document.querySelector('.nav-icon a[href="cart.php"]');
+                                if (cartLink) {
+                                    const badge = document.createElement('span');
+                                    badge.className = 'cart-badge';
+                                    badge.textContent = data.count > 99 ? '99+' : data.count;
+                                    cartLink.appendChild(badge);
+                                }
+                            }
+                        } else if (cartBadge) {
+                            cartBadge.remove();
+                        }
+                    }
+                });
+        }
+
+        // Show wishlist notification
+        function showWishlistNotification(message) {
+            showNotification(message, 'success');
+        }
+
+        // Simple notification system (matches dashboard)
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('wishlist-notification');
+            const messageEl = notification.querySelector('.wishlist-message');
             
-            messageElement.textContent = message;
-            toast.className = `notification-toast ${type}`;
-            toast.classList.add('show');
+            messageEl.textContent = message;
+            notification.className = `wishlist-notification ${type} show`;
             
             setTimeout(() => {
-                toast.classList.remove('show');
+                notification.classList.remove('show');
             }, 3000);
         }
 

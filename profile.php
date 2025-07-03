@@ -162,12 +162,13 @@ if (isset($_POST['logout'])) {
 
             <div class="menu" role="menubar" id="mobile-menu">
                 <a href="semua.php" class="menu-item" role="menuitem">All Games</a>
+                <a href="baru.php" class="menu-item" role="menuitem">New Releases</a>
+                <a href="promo.php" class="menu-item" role="menuitem">Special Offers</a>
             </div>
 
             <div class="search-bar" role="search">
                 <form method="GET" action="search.php">
-                    <input type="text" name="query" placeholder="Search Games" class="search-input" 
-                           aria-label="Enter game search keywords">
+                    <input type="text" name="query" placeholder="Search Games" class="search-input" aria-label="Enter game search keywords">
                     <button type="submit" class="search-icon" aria-label="Start search">
                         <img src="image/search-btn.svg" class="search-img" alt="" width="16" height="16">
                     </button>
@@ -199,7 +200,7 @@ if (isset($_POST['logout'])) {
                 </div>
             </div>
         </div>
-    </nav>
+    </nav> 
 
 
     <main class="main-content" id="main-content">
@@ -821,7 +822,16 @@ if (isset($_POST['logout'])) {
                                     <p style="color: var(--text-secondary); margin: 0; font-size: 0.85rem;">${item.pengembang}</p>
                                 </div>
                                 <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-sm);">
-                                    <span style="color: var(--primary); font-weight: 600;">$${parseFloat(item.price).toFixed(2)}</span>
+                                    <span style="color: var(--primary); font-weight: 600;">${item.price}</span>
+                                    <a href="reviewrate.php?order_id=${orderId}&produk_id=${item.produk_id}"
+                                        style="background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);"
+                                        onmouseover="this.style.background='var(--primary-hover)'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(139, 92, 246, 0.4)'"
+                                        onmouseout="this.style.background='var(--primary)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(139, 92, 246, 0.3)'"
+                                        class="detail-review-btn"
+                                        role="button"
+                                        aria-label="Write a review for this game">
+                                        Write a Review
+                                    </a>
                                     <button onclick="event.stopPropagation(); showSteamKey('${item.steam_key}', '${item.nama.replace(/'/g, "\\'")}');" 
                                             style="background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);"
                                             onmouseover="this.style.background='var(--primary-hover)'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(139, 92, 246, 0.4)'" 
