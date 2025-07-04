@@ -655,6 +655,143 @@
     margin: 0;
 }
 
+/* Guest Review Section Styles */
+.guest-review-section {
+    margin-bottom: var(--space-xl);
+}
+
+.guest-review-card {
+    background: var(--bg-glass);
+    backdrop-filter: var(--glass-blur-strong);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+    box-shadow: var(--glass-shadow);
+    transition: var(--transition-normal);
+}
+
+.guest-review-card:hover {
+    background: var(--bg-glass-hover);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.guest-review-icon {
+    flex-shrink: 0;
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.guest-review-content {
+    flex: 1;
+}
+
+.guest-review-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 var(--space-sm) 0;
+    background: linear-gradient(135deg, var(--primary-light), var(--accent-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.guest-review-message {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.6;
+    margin: 0 0 var(--space-lg) 0;
+}
+
+.guest-review-actions {
+    display: flex;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+}
+
+.guest-login-btn,
+.guest-register-btn {
+    padding: var(--space-sm) var(--space-lg);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 100px;
+}
+
+.guest-login-btn {
+    background: var(--primary);
+    color: white;
+    border: 2px solid var(--primary);
+}
+
+.guest-login-btn:hover {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.guest-register-btn {
+    background: transparent;
+    color: var(--accent-light);
+    border: 2px solid var(--accent-light);
+}
+
+.guest-register-btn:hover {
+    background: var(--accent-light);
+    color: white;
+    transform: translateY(-1px);
+}
+
+/* Mobile responsive for guest review section */
+@media (max-width: 768px) {
+    .guest-review-card {
+        flex-direction: column;
+        text-align: center;
+        padding: var(--space-lg);
+        gap: var(--space-md);
+    }
+    
+    .guest-review-icon {
+        width: 56px;
+        height: 56px;
+    }
+    
+    .guest-review-actions {
+        justify-content: center;
+    }
+    
+    .guest-login-btn,
+    .guest-register-btn {
+        min-width: 120px;
+    }
+}
+
+@media (max-width: 480px) {
+    .guest-review-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .guest-login-btn,
+    .guest-register-btn {
+        width: 100%;
+    }
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
     .detail-layout {

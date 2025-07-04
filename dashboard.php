@@ -1,27 +1,27 @@
 <?php
-require "session.php";
+session_start();
 require "koneksi.php";
 require "image_helper.php";
 
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Pragma: no-cache");
 
-if (!isset($_SESSION['loginbtn']) || $_SESSION['loginbtn'] == false) {
-    header("Location: login.php");
-    exit();
+// Check if user is logged in
+$is_logged_in = isset($_SESSION['loginbtn']) && $_SESSION['loginbtn'] == true;
+$user_id = $is_logged_in ? $_SESSION['user_id'] : null;
+
+// Get user info for navbar (only if logged in)
+$foto = null;
+if ($is_logged_in) {
+    $user_query = mysqli_query($con, "SELECT foto FROM `users` WHERE id = '$user_id'");
+    $user_data = mysqli_fetch_assoc($user_query);
+    $foto = $user_data ? $user_data['foto'] : null;
 }
 
-$user_id = $_SESSION['user_id'];
-
-// Get user info for navbar
-$user_query = mysqli_query($con, "SELECT foto FROM `users` WHERE id = '$user_id'");
-$user_data = mysqli_fetch_assoc($user_query);
-$foto = $user_data ? $user_data['foto'] : null;
-
-// Check for payment success notification
+// Check for payment success notification (only for logged in users)
 $payment_success = false;
 $order_id = null;
-if (isset($_SESSION['payment_success']) && $_SESSION['payment_success'] === true) {
+if ($is_logged_in && isset($_SESSION['payment_success']) && $_SESSION['payment_success'] === true) {
     $payment_success = true;
     $order_id = $_SESSION['order_id'] ?? null;
     // Clear the session variables
@@ -29,18 +29,22 @@ if (isset($_SESSION['payment_success']) && $_SESSION['payment_success'] === true
     unset($_SESSION['order_id']);
 }
 
-// Get user's wishlist items
+// Get user's wishlist items (only if logged in)
 $wishlist_ids = [];
-$get_wishlist = mysqli_query($con, "SELECT produk_id FROM wishlist WHERE user_id = '$user_id'");
-while ($row = mysqli_fetch_assoc($get_wishlist)) {
-    $wishlist_ids[] = $row['produk_id'];
+if ($is_logged_in) {
+    $get_wishlist = mysqli_query($con, "SELECT produk_id FROM wishlist WHERE user_id = '$user_id'");
+    while ($row = mysqli_fetch_assoc($get_wishlist)) {
+        $wishlist_ids[] = $row['produk_id'];
+    }
 }
 
-// Get user's cart items
+// Get user's cart items (only if logged in)
 $cart_ids = [];
-$get_cart = mysqli_query($con, "SELECT produk_id FROM cart WHERE user_id = '$user_id'");
-while ($row = mysqli_fetch_assoc($get_cart)) {
-    $cart_ids[] = $row['produk_id'];
+if ($is_logged_in) {
+    $get_cart = mysqli_query($con, "SELECT produk_id FROM cart WHERE user_id = '$user_id'");
+    while ($row = mysqli_fetch_assoc($get_cart)) {
+        $cart_ids[] = $row['produk_id'];
+    }
 }
 
 // Function to get average rating for a product
@@ -116,26 +120,38 @@ function generateStarRating($avg_rating) {
 
             <div class="nav-icons">
                 <div class="nav-icon">
-                    <a href="cart.php" aria-label="View shopping cart">
-                        <img src="image/cart-btn.svg" class="icon-img" alt="" width="20" height="20">
-                        <?php
-                        $cart_count_query = mysqli_query($con, "SELECT COUNT(*) as count FROM `cart` WHERE user_id = '$user_id'");
-                        $cart_count = mysqli_fetch_assoc($cart_count_query)['count'];
-                        if ($cart_count > 0) {
-                            echo '<span class="cart-badge">' . ($cart_count > 99 ? '99+' : $cart_count) . '</span>';
-                        }
-                        ?>
-                    </a>
+                    <?php if ($is_logged_in): ?>
+                        <a href="cart.php" aria-label="View shopping cart">
+                            <img src="image/cart-btn.svg" class="icon-img" alt="" width="20" height="20">
+                            <?php
+                            $cart_count_query = mysqli_query($con, "SELECT COUNT(*) as count FROM `cart` WHERE user_id = '$user_id'");
+                            $cart_count = mysqli_fetch_assoc($cart_count_query)['count'];
+                            if ($cart_count > 0) {
+                                echo '<span class="cart-badge">' . ($cart_count > 99 ? '99+' : $cart_count) . '</span>';
+                            }
+                            ?>
+                        </a>
+                    <?php else: ?>
+                        <a href="login.php" aria-label="Login to view cart" onclick="showGuestMessage('cart')">
+                            <img src="image/cart-btn.svg" class="icon-img" alt="" width="20" height="20">
+                        </a>
+                    <?php endif; ?>
                 </div>
 
                 <div class="nav-icon profile">
-                    <a href="profile.php" aria-label="View user profile">
-                        <?php if ($foto): ?>
-                            <img src="image/<?php echo $foto; ?>" class="icon-img profile-avatar" alt="" width="44" height="44" style="border-radius: 50%; object-fit: cover; filter: none; width: 44px; height: 44px;">
-                        <?php else: ?>
+                    <?php if ($is_logged_in): ?>
+                        <a href="profile.php" aria-label="View user profile">
+                            <?php if ($foto): ?>
+                                <img src="image/<?php echo $foto; ?>" class="icon-img profile-avatar" alt="" width="44" height="44" style="border-radius: 50%; object-fit: cover; filter: none; width: 44px; height: 44px;">
+                            <?php else: ?>
+                                <img src="image/profile white.svg" class="icon-img" alt="" width="20" height="20">
+                            <?php endif; ?>
+                        </a>
+                    <?php else: ?>
+                        <a href="login.php" aria-label="Login to access profile">
                             <img src="image/profile white.svg" class="icon-img" alt="" width="20" height="20">
-                        <?php endif; ?>
-                    </a>
+                        </a>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -189,7 +205,7 @@ function generateStarRating($avg_rating) {
                     ×
                 </button>
 
-                <div style="display: flex; align-items: center; justify-content: center; gap: var(--space-lg); position: relative; z-index: 1;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: var(--space-lg); position: relative, z-index: 1;">
                     <!-- Success icon with animation -->
                     <div style="
                         width: 60px;
@@ -394,7 +410,7 @@ function generateStarRating($avg_rating) {
                                         class="wishlist-btn <?php echo $is_in_wishlist ? 'active' : ''; ?>" 
                                         data-produk-id="<?php echo $fetch_produk['id']; ?>"
                                         data-in-wishlist="<?php echo $is_in_wishlist ? 'true' : 'false'; ?>"
-                                        onclick="event.stopPropagation(); toggleWishlist(this);"
+                                        onclick="event.stopPropagation(); <?php echo $is_logged_in ? 'toggleWishlist(this)' : 'redirectToLogin()'; ?>;"
                                         aria-label="<?php echo $is_in_wishlist ? 'Remove from wishlist' : 'Add to wishlist'; ?>">
                                     <svg class="heart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
@@ -426,7 +442,7 @@ function generateStarRating($avg_rating) {
                                 <button class="add-to-cart-btn <?php echo $is_in_cart ? 'added' : ''; ?>" 
                                         data-product-id="<?php echo $fetch_produk['id']; ?>"
                                         data-in-cart="<?php echo $is_in_cart ? 'true' : 'false'; ?>"
-                                        onclick="event.stopPropagation(); addToCart(<?php echo $fetch_produk['id']; ?>);">
+                                        onclick="event.stopPropagation(); <?php echo $is_logged_in ? 'addToCart(' . $fetch_produk['id'] . ')' : 'redirectToLogin()'; ?>;">
                                     <?php echo $is_in_cart ? 'Added' : 'Add to Cart'; ?>
                                 </button>
                             </div>
@@ -470,7 +486,7 @@ function generateStarRating($avg_rating) {
                                         class="wishlist-btn <?php echo $is_in_wishlist ? 'active' : ''; ?>" 
                                         data-produk-id="<?php echo $fetch_produk['id']; ?>"
                                         data-in-wishlist="<?php echo $is_in_wishlist ? 'true' : 'false'; ?>"
-                                        onclick="event.stopPropagation(); toggleWishlist(this);"
+                                        onclick="event.stopPropagation(); <?php echo $is_logged_in ? 'toggleWishlist(this)' : 'redirectToLogin()'; ?>;"
                                         aria-label="<?php echo $is_in_wishlist ? 'Remove from wishlist' : 'Add to wishlist'; ?>">
                                     <svg class="heart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
@@ -502,7 +518,7 @@ function generateStarRating($avg_rating) {
                                 <button class="add-to-cart-btn <?php echo $is_in_cart ? 'added' : ''; ?>" 
                                         data-product-id="<?php echo $fetch_produk['id']; ?>"
                                         data-in-cart="<?php echo $is_in_cart ? 'true' : 'false'; ?>"
-                                        onclick="event.stopPropagation(); addToCart(<?php echo $fetch_produk['id']; ?>);">
+                                        onclick="event.stopPropagation(); <?php echo $is_logged_in ? 'addToCart(' . $fetch_produk['id'] . ')' : 'redirectToLogin()'; ?>;">
                                     <?php echo $is_in_cart ? 'Added' : 'Add to Cart'; ?>
                                 </button>
                             </div>
@@ -546,7 +562,7 @@ function generateStarRating($avg_rating) {
                                         class="wishlist-btn <?php echo $is_in_wishlist ? 'active' : ''; ?>" 
                                         data-produk-id="<?php echo $fetch_produk['id']; ?>"
                                         data-in-wishlist="<?php echo $is_in_wishlist ? 'true' : 'false'; ?>"
-                                        onclick="event.stopPropagation(); toggleWishlist(this);"
+                                        onclick="event.stopPropagation(); <?php echo $is_logged_in ? 'toggleWishlist(this)' : 'redirectToLogin()'; ?>;"
                                         aria-label="<?php echo $is_in_wishlist ? 'Remove from wishlist' : 'Add to wishlist'; ?>">
                                     <svg class="heart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
@@ -578,7 +594,7 @@ function generateStarRating($avg_rating) {
                                 <button class="add-to-cart-btn special <?php echo $is_in_cart ? 'added' : ''; ?>" 
                                         data-product-id="<?php echo $fetch_produk['id']; ?>"
                                         data-in-cart="<?php echo $is_in_cart ? 'true' : 'false'; ?>"
-                                        onclick="event.stopPropagation(); addToCart(<?php echo $fetch_produk['id']; ?>);">
+                                        onclick="event.stopPropagation(); <?php echo $is_logged_in ? 'addToCart(' . $fetch_produk['id'] . ')' : 'redirectToLogin()'; ?>;">
                                     <?php echo $is_in_cart ? 'Added' : 'Buy Now'; ?>
                                 </button>
                             </div>
@@ -630,10 +646,13 @@ function generateStarRating($avg_rating) {
                 <p>&copy; 2025 Vault | Developed by Group 4 RPL</p>
             </div>
         </div>
-    </footer>    <script>
-        // Global variables
-        const wishlistItems = <?php echo json_encode($wishlist_ids); ?>;
-        const cartItems = <?php echo json_encode($cart_ids); ?>;
+    </footer>
+
+    <script>
+        // Ensure all functions are in global scope
+        const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
+        
+        console.log('Dashboard script loaded. User logged in:', isLoggedIn);
 
         // Mobile Menu Toggle
         function toggleMobileMenu() {
@@ -655,59 +674,67 @@ function generateStarRating($avg_rating) {
             }
         }
 
-        // Wishlist functionality - declared globally
-        function toggleWishlist(button) {
-            const produkId = button.getAttribute("data-produk-id");
-            const inWishlist = button.getAttribute("data-in-wishlist") === "true";
-            const newStatus = !inWishlist;
+        // Notification system
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('wishlist-notification');
+            if (!notification) {
+                console.error('Notification element not found');
+                return;
+            }
             
-            // Update UI immediately for better UX
-            button.setAttribute("data-in-wishlist", newStatus.toString());
-            button.classList.toggle('active', newStatus);
-            button.disabled = true;
-
-            // Send AJAX request
-            fetch("ajax_handler.php", {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: `action=toggle_wishlist&produk_id=${produkId}`
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showNotification(data.message, 'success');
-                } else {
-                    // Revert UI changes on error
-                    button.setAttribute("data-in-wishlist", inWishlist.toString());
-                    button.classList.toggle('active', inWishlist);
-                    showNotification(data.message || "Failed to update wishlist", "error");
-                }
-            })
-            .catch((error) => {
-                console.error("Wishlist error:", error);
-                // Revert UI changes on error
-                button.setAttribute("data-in-wishlist", inWishlist.toString());
-                button.classList.toggle('active', inWishlist);
-                showNotification("Network error. Please try again.", "error");
-            })
-            .finally(() => {
-                button.disabled = false;
-            });
+            const messageEl = notification.querySelector('.wishlist-message');
+            if (!messageEl) {
+                console.error('Message element not found');
+                return;
+            }
+            
+            messageEl.textContent = message;
+            notification.className = `wishlist-notification ${type} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
         }
 
-        // Add to cart functionality - declared globally
+        // Redirect to login function
+        function redirectToLogin() {
+            showNotification("Please log in to use this feature", "warning");
+            setTimeout(() => {
+                window.location.href = 'login.php';
+            }, 1500);
+        }
+
+        // Add to cart function
         function addToCart(gameId) {
-            const button = event.target;
+            console.log('addToCart called with gameId:', gameId);
+            
+            if (!isLoggedIn) {
+                redirectToLogin();
+                return;
+            }
+
+            // Find the button that was clicked
+            let button = null;
+            const buttons = document.querySelectorAll(`[data-product-id="${gameId}"]`);
+            for (let btn of buttons) {
+                if (btn.classList.contains('add-to-cart-btn')) {
+                    button = btn;
+                    break;
+                }
+            }
+            
+            if (!button) {
+                console.error('Could not find add-to-cart button for gameId:', gameId);
+                return;
+            }
+
             const originalText = button.textContent;
             const isInCart = button.getAttribute("data-in-cart") === "true";
-            const newStatus = !isInCart;
-            const isBuyNowButton = originalText.includes('Buy Now');
+            const isBuyNowButton = originalText.toLowerCase().includes('buy now');
             
-            // Update button state immediately for better UX
+            // Update button state immediately
             button.disabled = true;
             button.textContent = isInCart ? 'Removing...' : 'Adding...';
-            button.setAttribute("data-in-cart", newStatus.toString());
-            button.classList.toggle('added', newStatus);
 
             fetch("ajax_handler.php", {
                 method: "POST",
@@ -718,38 +745,30 @@ function generateStarRating($avg_rating) {
             .then(data => {
                 if (data.success) {
                     showNotification(data.message, 'success');
-                    updateCartCount(); // Update cart counter
+                    updateCartBadge();
                     
-                    // Update button text based on action
                     if (data.action === 'added') {
-                        button.textContent = originalText.includes('Buy Now') ? 'Added' : 'Added';
+                        button.textContent = 'Added';
                         button.classList.add('added');
                         button.setAttribute("data-in-cart", "true");
                         
-                        // If it was a "Buy Now" button, redirect to cart after a short delay
                         if (isBuyNowButton) {
                             setTimeout(() => {
                                 window.location.href = 'cart.php';
                             }, 500);
                         }
                     } else if (data.action === 'removed') {
-                        button.textContent = originalText.includes('Buy Now') ? 'Buy Now' : 'Add to Cart';
+                        button.textContent = isBuyNowButton ? 'Buy Now' : 'Add to Cart';
                         button.classList.remove('added');
                         button.setAttribute("data-in-cart", "false");
                     }
                 } else {
-                    // Revert UI changes on error
-                    button.setAttribute("data-in-cart", isInCart.toString());
-                    button.classList.toggle('added', isInCart);
                     button.textContent = originalText;
                     showNotification(data.message || "Failed to update cart", "error");
                 }
             })
             .catch((error) => {
                 console.error("Cart error:", error);
-                // Revert UI changes on error
-                button.setAttribute("data-in-cart", isInCart.toString());
-                button.classList.toggle('added', isInCart);
                 button.textContent = originalText;
                 showNotification("Network error. Please try again.", "error");
             })
@@ -758,9 +777,57 @@ function generateStarRating($avg_rating) {
             });
         }
 
-        // Update cart count in navbar
-        function updateCartCount() {
-            fetch("ajax_handler.php?action=get_cart_count")
+        // Toggle wishlist function
+        function toggleWishlist(button) {
+            console.log('toggleWishlist called with:', button);
+            
+            if (!isLoggedIn) {
+                redirectToLogin();
+                return;
+            }
+
+            const productId = button.getAttribute('data-produk-id');
+            const isInWishlist = button.getAttribute('data-in-wishlist') === 'true';
+            const newStatus = !isInWishlist;
+            
+            // Update UI immediately
+            button.setAttribute("data-in-wishlist", newStatus.toString());
+            button.classList.toggle('active', newStatus);
+            button.disabled = true;
+            
+            fetch('ajax_handler.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `action=toggle_wishlist&produk_id=${productId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(data.message, 'success');
+                } else {
+                    // Revert UI changes on error
+                    button.setAttribute("data-in-wishlist", isInWishlist.toString());
+                    button.classList.toggle('active', isInWishlist);
+                    showNotification(data.message || 'Failed to update wishlist', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Revert UI changes on error
+                button.setAttribute("data-in-wishlist", isInWishlist.toString());
+                button.classList.toggle('active', isInWishlist);
+                showNotification('Network error. Please try again.', 'error');
+            })
+            .finally(() => {
+                button.disabled = false;
+            });
+        }
+
+        // Update cart badge with current count
+        function updateCartBadge() {
+            fetch('ajax_handler.php?action=get_cart_count')
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -781,20 +848,9 @@ function generateStarRating($avg_rating) {
                     }
                 }
             })
-            .catch(error => console.error("Error updating cart count:", error));
-        }
-
-        // Simple notification system
-        function showNotification(message, type = 'success') {
-            const notification = document.getElementById('wishlist-notification');
-            const messageEl = notification.querySelector('.wishlist-message');
-            
-            messageEl.textContent = message;
-            notification.className = `wishlist-notification ${type} show`;
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
+            .catch(error => {
+                console.error('Error updating cart badge:', error);
+            });
         }
 
         // Scroll to top button
@@ -821,6 +877,12 @@ function generateStarRating($avg_rating) {
 
         // Initialize everything
         document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM Content Loaded - Functions available:', {
+                addToCart: typeof addToCart,
+                toggleWishlist: typeof toggleWishlist,
+                showNotification: typeof showNotification
+            });
+            
             // Auto-hide payment success banner after 8 seconds
             const paymentBanner = document.querySelector('.payment-success-banner');
             if (paymentBanner) {
@@ -833,7 +895,7 @@ function generateStarRating($avg_rating) {
             addScrollToTop();
             
             // Load initial cart count
-            updateCartCount();
+            updateCartBadge();
             
             // Close mobile menu when clicking outside
             document.addEventListener('click', (e) => {
@@ -854,5 +916,4 @@ function generateStarRating($avg_rating) {
     </script>
 
 </body>
-
 </html>

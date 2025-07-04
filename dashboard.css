@@ -882,6 +882,10 @@ background: linear-gradient(
   border-left: 4px solid var(--success);
 }
 
+.wishlist-notification.warning {
+  border-left: 4px solid #ffa500;
+}
+
 .wishlist-notification.error {
   border-left: 4px solid var(--danger);
 }

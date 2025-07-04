@@ -1,21 +1,21 @@
 <?php
-require "session.php";
+session_start();
 require "koneksi.php";
 
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Pragma: no-cache");
 
-if (!isset($_SESSION['loginbtn']) || $_SESSION['loginbtn'] == false) {
-    header("Location: login.php");
-    exit();
+// Check if user is logged in
+$is_logged_in = isset($_SESSION['loginbtn']) && $_SESSION['loginbtn'] == true;
+$user_id = $is_logged_in ? $_SESSION['user_id'] : null;
+
+// Get user info for navbar (only if logged in)
+$foto = null;
+if ($is_logged_in) {
+    $user_query = mysqli_query($con, "SELECT foto FROM `users` WHERE id = '$user_id'");
+    $user_data = mysqli_fetch_assoc($user_query);
+    $foto = $user_data ? $user_data['foto'] : null;
 }
-
-$user_id = $_SESSION['user_id'];
-
-// Get user info for navbar
-$user_query = mysqli_query($con, "SELECT foto FROM `users` WHERE id = '$user_id'");
-$user_data = mysqli_fetch_assoc($user_query);
-$foto = $user_data ? $user_data['foto'] : null;
 
 if (isset($_GET['produk_id'])) {
     $produk_id = intval($_GET['produk_id']); 
@@ -67,54 +67,66 @@ function generateStarRating($avg_rating) {
            str_repeat('☆', $empty_stars);
 }
 
-// Get cart and wishlist data for current user
-$cart_query = mysqli_query($con, "SELECT produk_id FROM `cart` WHERE user_id = '$user_id'");
+// Get cart and wishlist data for current user (only if logged in)
 $cart_items = [];
-while ($cart_row = mysqli_fetch_assoc($cart_query)) {
-    $cart_items[] = $cart_row['produk_id'];
-}
-
-$wishlist_query = mysqli_query($con, "SELECT produk_id FROM `wishlist` WHERE user_id = '$user_id'");
 $wishlist_ids = [];
-while ($wishlist_row = mysqli_fetch_assoc($wishlist_query)) {
-    $wishlist_ids[] = $wishlist_row['produk_id'];
-}
-
-// Check if product is in user's cart/wishlist
-$is_in_wishlist = in_array($fetch_produk['id'], $wishlist_ids);
-$is_in_cart = in_array($fetch_produk['id'], $cart_items);
-// Check if user purchased this product
-$purchased_query = mysqli_query($con, "
-    SELECT COUNT(*) as cnt
-    FROM `orders` o
-    JOIN `order_items` oi ON o.id = oi.order_id
-    WHERE o.user_id = '$user_id' AND oi.produk_id = '{$fetch_produk['id']}'
-");
-$purchased_data = mysqli_fetch_assoc($purchased_query);
-$has_purchased = ($purchased_data['cnt'] > 0);
-// Get last order ID containing this product for review link
+$is_in_wishlist = false;
+$is_in_cart = false;
+$has_purchased = false;
 $last_order_id = null;
-if ($has_purchased) {
-    $order_query = mysqli_query($con, "
-        SELECT o.id
+
+if ($is_logged_in) {
+    $cart_query = mysqli_query($con, "SELECT produk_id FROM `cart` WHERE user_id = '$user_id'");
+    while ($cart_row = mysqli_fetch_assoc($cart_query)) {
+        $cart_items[] = $cart_row['produk_id'];
+    }
+
+    $wishlist_query = mysqli_query($con, "SELECT produk_id FROM `wishlist` WHERE user_id = '$user_id'");
+    while ($wishlist_row = mysqli_fetch_assoc($wishlist_query)) {
+        $wishlist_ids[] = $wishlist_row['produk_id'];
+    }
+
+    // Check if product is in user's cart/wishlist
+    $is_in_wishlist = in_array($fetch_produk['id'], $wishlist_ids);
+    $is_in_cart = in_array($fetch_produk['id'], $cart_items);
+    
+    // Check if user purchased this product
+    $purchased_query = mysqli_query($con, "
+        SELECT COUNT(*) as cnt
         FROM `orders` o
         JOIN `order_items` oi ON o.id = oi.order_id
         WHERE o.user_id = '$user_id' AND oi.produk_id = '{$fetch_produk['id']}'
-        ORDER BY o.created_at DESC
-        LIMIT 1
     ");
-    $order_row = mysqli_fetch_assoc($order_query);
-    $last_order_id = $order_row ? $order_row['id'] : null;
+    $purchased_data = mysqli_fetch_assoc($purchased_query);
+    $has_purchased = ($purchased_data['cnt'] > 0);
+    
+    // Get last order ID containing this product for review link
+    if ($has_purchased) {
+        $order_query = mysqli_query($con, "
+            SELECT o.id
+            FROM `orders` o
+            JOIN `order_items` oi ON o.id = oi.order_id
+            WHERE o.user_id = '$user_id' AND oi.produk_id = '{$fetch_produk['id']}'
+            ORDER BY o.created_at DESC
+            LIMIT 1
+        ");
+        $order_row = mysqli_fetch_assoc($order_query);
+        $last_order_id = $order_row ? $order_row['id'] : null;
+    }
 }
 
-// Check if user has already reviewed this product
-$existing_review_query = mysqli_query($con, "
-    SELECT id, rating, comment 
-    FROM rating 
-    WHERE produk_id = '{$fetch_produk['id']}' AND user_id = '$user_id'
-");
-$has_reviewed = mysqli_num_rows($existing_review_query) > 0;
-$user_review = $has_reviewed ? mysqli_fetch_assoc($existing_review_query) : null;
+// Check if user has already reviewed this product (only for logged in users)
+$has_reviewed = false;
+$user_review = null;
+if ($is_logged_in && $user_id) {
+    $existing_review_query = mysqli_query($con, "
+        SELECT id, rating, comment 
+        FROM rating 
+        WHERE produk_id = '{$fetch_produk['id']}' AND user_id = '$user_id'
+    ");
+    $has_reviewed = mysqli_num_rows($existing_review_query) > 0;
+    $user_review = $has_reviewed ? mysqli_fetch_assoc($existing_review_query) : null;
+}
 
 // Get average rating for this product
 $rating_data = getAverageRating($con, $fetch_produk['id']);
@@ -202,26 +214,38 @@ $result_reviews = $stmt->get_result();
 
             <div class="nav-icons">
                 <div class="nav-icon">
-                    <a href="cart.php" aria-label="View shopping cart">
-                        <img src="image/cart-btn.svg" class="icon-img" alt="" width="20" height="20">
-                        <?php
-                        $cart_count_query = mysqli_query($con, "SELECT COUNT(*) as count FROM `cart` WHERE user_id = '$user_id'");
-                        $cart_count = mysqli_fetch_assoc($cart_count_query)['count'];
-                        if ($cart_count > 0) {
-                            echo '<span class="cart-badge">' . ($cart_count > 99 ? '99+' : $cart_count) . '</span>';
-                        }
-                        ?>
-                    </a>
+                    <?php if ($is_logged_in): ?>
+                        <a href="cart.php" aria-label="View shopping cart">
+                            <img src="image/cart-btn.svg" class="icon-img" alt="" width="20" height="20">
+                            <?php
+                            $cart_count_query = mysqli_query($con, "SELECT COUNT(*) as count FROM `cart` WHERE user_id = '$user_id'");
+                            $cart_count = mysqli_fetch_assoc($cart_count_query)['count'];
+                            if ($cart_count > 0) {
+                                echo '<span class="cart-badge">' . ($cart_count > 99 ? '99+' : $cart_count) . '</span>';
+                            }
+                            ?>
+                        </a>
+                    <?php else: ?>
+                        <a href="login.php" aria-label="Login to view cart">
+                            <img src="image/cart-btn.svg" class="icon-img" alt="" width="20" height="20">
+                        </a>
+                    <?php endif; ?>
                 </div>
 
                 <div class="nav-icon profile">
-                    <a href="profile.php#profile" aria-label="View user profile">
-                        <?php if ($foto): ?>
-                            <img src="image/<?php echo $foto; ?>" class="icon-img profile-avatar" alt="" width="44" height="44" style="border-radius: 50%; object-fit: cover; filter: none; width: 44px; height: 44px;">
-                        <?php else: ?>
+                    <?php if ($is_logged_in): ?>
+                        <a href="profile.php#profile" aria-label="View user profile">
+                            <?php if ($foto): ?>
+                                <img src="image/<?php echo $foto; ?>" class="icon-img profile-avatar" alt="" width="44" height="44" style="border-radius: 50%; object-fit: cover; filter: none; width: 44px; height: 44px;">
+                            <?php else: ?>
+                                <img src="image/profile white.svg" class="icon-img" alt="" width="20" height="20">
+                            <?php endif; ?>
+                        </a>
+                    <?php else: ?>
+                        <a href="login.php" aria-label="Login to access profile">
                             <img src="image/profile white.svg" class="icon-img" alt="" width="20" height="20">
-                        <?php endif; ?>
-                    </a>
+                        </a>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -235,8 +259,13 @@ $result_reviews = $stmt->get_result();
                     <ul class="category-list">
                         <li><a href="dashboard.php">Back to Home</a></li>
                         <li><a href="semua.php">Browse All Games</a></li>
-                        <li><a href="cart.php">My Cart</a></li>
-                        <li><a href="profile.php#profile">My Profile</a></li>
+                        <?php if ($is_logged_in): ?>
+                            <li><a href="cart.php">My Cart</a></li>
+                            <li><a href="profile.php#profile">My Profile</a></li>
+                        <?php else: ?>
+                            <li><a href="login.php">Login for Cart</a></li>
+                            <li><a href="login.php">Login for Profile</a></li>
+                        <?php endif; ?>
                     </ul>
                 </div>
                 <div class="category-section">
@@ -326,7 +355,7 @@ $result_reviews = $stmt->get_result();
                                         <button class="add-to-cart-btn detail-cart-btn <?php echo $is_in_cart ? 'added' : ''; ?>" 
                                                 data-product-id="<?php echo $fetch_produk['id']; ?>"
                                                 data-in-cart="<?php echo $is_in_cart ? 'true' : 'false'; ?>"
-                                                onclick="toggleCart(this);">
+                                                onclick="<?php echo $is_logged_in ? 'toggleCart(this)' : 'redirectToLogin()'; ?>;">
                                             <?php echo $is_in_cart ? 'In Cart' : 'Add to Cart'; ?>
                                         </button>
                                         
@@ -334,7 +363,7 @@ $result_reviews = $stmt->get_result();
                                                 class="detail-page-wishlist-btn <?php echo $is_in_wishlist ? 'active' : ''; ?>" 
                                                 data-produk-id="<?php echo $fetch_produk['id']; ?>"
                                                 data-in-wishlist="<?php echo $is_in_wishlist ? 'true' : 'false'; ?>"
-                                                onclick="toggleWishlist(this);"
+                                                onclick="<?php echo $is_logged_in ? 'toggleWishlist(this)' : 'redirectToLogin()'; ?>;"
                                                 aria-label="<?php echo $is_in_wishlist ? 'Remove from wishlist' : 'Add to wishlist'; ?>">
                                             <svg class="heart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
@@ -435,27 +464,51 @@ $result_reviews = $stmt->get_result();
                         <span class="review-count"><?php echo mysqli_num_rows($result_reviews); ?> reviews</span>
                     </div>
                         
-                    <?php if ($has_purchased && $last_order_id): ?>
-                        <?php if ($has_reviewed): ?>
-                            <!-- User has already reviewed -->
-                            <div class="user-review-status">
-                                <span class="reviewed-badge">✅ You reviewed this game (<?php echo $user_review['rating']; ?>/5)</span>
-                            </div>
-                        <?php else: ?>
-                            <!-- User can write a review -->
-                            <div class="user-review-status">
-                                <a href="reviewrate.php?order_id=<?php echo $last_order_id; ?>&produk_id=<?php echo $fetch_produk['id']; ?>"
-                                    class="detail-review-btn"
-                                    role="button"
-                                    aria-label="Write a review for this game">
-                                    📝 Write a Review
-                                </a>
+                    <?php if ($is_logged_in): ?>
+                        <?php if ($has_purchased && $last_order_id): ?>
+                            <?php if ($has_reviewed): ?>
+                                <!-- User has already reviewed -->
+                                <div class="user-review-status">
+                                    <span class="reviewed-badge">✅ You reviewed this game (<?php echo $user_review['rating']; ?>/5)</span>
+                                </div>
+                            <?php else: ?>
+                                <!-- User can write a review -->
+                                <div class="user-review-status">
+                                    <a href="reviewrate.php?order_id=<?php echo $last_order_id; ?>&produk_id=<?php echo $fetch_produk['id']; ?>"
+                                        class="detail-review-btn"
+                                        role="button"
+                                        aria-label="Write a review for this game">
+                                        📝 Write a Review
+                                    </a>
+                                </div>
+                            <?php endif; ?>
+                        <?php elseif (!$has_purchased): ?>
+                            <!-- User hasn't purchased the game -->
+                            <div class="review-restriction">
+                                <span class="purchase-required">🛒 Purchase this game to write a review</span>
                             </div>
                         <?php endif; ?>
-                    <?php elseif (!$has_purchased): ?>
-                        <!-- User hasn't purchased the game -->
-                        <div class="review-restriction">
-                            <span class="purchase-required">🛒 Purchase this game to write a review</span>
+                    <?php else: ?>
+                        <!-- Guest user -->
+                        <div class="guest-review-section">
+                            <div class="guest-review-card">
+                                <div class="guest-review-icon">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="12" cy="7" r="4"/>
+                                    </svg>
+                                </div>
+                                <div class="guest-review-content">
+                                    <h3 class="guest-review-title">Join the Community</h3>
+                                    <p class="guest-review-message">
+                                        Create an account to purchase games, write reviews, and connect with other gamers.
+                                    </p>
+                                    <div class="guest-review-actions">
+                                        <a href="login.php" class="guest-login-btn">Login</a>
+                                        <a href="register.php" class="guest-register-btn">Sign Up</a>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     <?php endif; ?>
 
@@ -764,6 +817,14 @@ $result_reviews = $stmt->get_result();
                 }
             });
         });
+
+        // Function to redirect guests to login page
+        function redirectToLogin() {
+            showNotification("Please login to use this feature", "error");
+            setTimeout(() => {
+                window.location.href = 'login.php';
+            }, 1000);
+        }
     </script>
 </body>
 

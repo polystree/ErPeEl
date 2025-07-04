@@ -1,21 +1,21 @@
 <?php
-require "session.php";
+session_start();
 require "koneksi.php";
 
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Pragma: no-cache");
 
-if (!isset($_SESSION['loginbtn']) || $_SESSION['loginbtn'] == false) {
-    header("Location: login.php");
-    exit();
+// Check if user is logged in
+$is_logged_in = isset($_SESSION['loginbtn']) && $_SESSION['loginbtn'] == true;
+$user_id = $is_logged_in ? $_SESSION['user_id'] : null;
+
+// Get user info for navbar (only if logged in)
+$foto = null;
+if ($is_logged_in) {
+    $user_query = mysqli_query($con, "SELECT foto FROM `users` WHERE id = '$user_id'");
+    $user_data = mysqli_fetch_assoc($user_query);
+    $foto = $user_data ? $user_data['foto'] : null;
 }
-
-$user_id = $_SESSION['user_id'];
-
-// Get user info for navbar
-$user_query = mysqli_query($con, "SELECT foto FROM `users` WHERE id = '$user_id'");
-$user_data = mysqli_fetch_assoc($user_query);
-$foto = $user_data ? $user_data['foto'] : null;
 
 // Rating function
 function getAverageRating($con, $produk_id) {
@@ -82,17 +82,20 @@ if (!empty($available_categories)) {
     }
 }
 
-// Get cart and wishlist data for current user
-$cart_query = mysqli_query($con, "SELECT produk_id FROM `cart` WHERE user_id = '$user_id'");
+// Get cart and wishlist data for current user (only if logged in)
 $cart_items = [];
-while ($cart_row = mysqli_fetch_assoc($cart_query)) {
-    $cart_items[] = $cart_row['produk_id'];
-}
-
-$wishlist_query = mysqli_query($con, "SELECT produk_id FROM `wishlist` WHERE user_id = '$user_id'");
 $wishlist_ids = [];
-while ($wishlist_row = mysqli_fetch_assoc($wishlist_query)) {
-    $wishlist_ids[] = $wishlist_row['produk_id'];
+
+if ($is_logged_in) {
+    $cart_query = mysqli_query($con, "SELECT produk_id FROM `cart` WHERE user_id = '$user_id'");
+    while ($cart_row = mysqli_fetch_assoc($cart_query)) {
+        $cart_items[] = $cart_row['produk_id'];
+    }
+
+    $wishlist_query = mysqli_query($con, "SELECT produk_id FROM `wishlist` WHERE user_id = '$user_id'");
+    while ($wishlist_row = mysqli_fetch_assoc($wishlist_query)) {
+        $wishlist_ids[] = $wishlist_row['produk_id'];
+    }
 }
 
 ?>
@@ -140,26 +143,38 @@ while ($wishlist_row = mysqli_fetch_assoc($wishlist_query)) {
 
             <div class="nav-icons">
                 <div class="nav-icon">
-                    <a href="cart.php" aria-label="View shopping cart">
-                        <img src="image/cart-btn.svg" class="icon-img" alt="" width="20" height="20">
-                        <?php
-                        $cart_count_query = mysqli_query($con, "SELECT COUNT(*) as count FROM `cart` WHERE user_id = '$user_id'");
-                        $cart_count = mysqli_fetch_assoc($cart_count_query)['count'];
-                        if ($cart_count > 0) {
-                            echo '<span class="cart-badge">' . ($cart_count > 99 ? '99+' : $cart_count) . '</span>';
-                        }
-                        ?>
-                    </a>
+                    <?php if ($is_logged_in): ?>
+                        <a href="cart.php" aria-label="View shopping cart">
+                            <img src="image/cart-btn.svg" class="icon-img" alt="" width="20" height="20">
+                            <?php
+                            $cart_count_query = mysqli_query($con, "SELECT COUNT(*) as count FROM `cart` WHERE user_id = '$user_id'");
+                            $cart_count = mysqli_fetch_assoc($cart_count_query)['count'];
+                            if ($cart_count > 0) {
+                                echo '<span class="cart-badge">' . ($cart_count > 99 ? '99+' : $cart_count) . '</span>';
+                            }
+                            ?>
+                        </a>
+                    <?php else: ?>
+                        <a href="login.php" aria-label="Login to access cart">
+                            <img src="image/cart-btn.svg" class="icon-img" alt="" width="20" height="20">
+                        </a>
+                    <?php endif; ?>
                 </div>
 
                 <div class="nav-icon profile">
-                    <a href="profile.php" aria-label="View user profile">
-                        <?php if ($foto): ?>
-                            <img src="image/<?php echo $foto; ?>" class="icon-img profile-avatar" alt="" width="44" height="44" style="border-radius: 50%; object-fit: cover; filter: none; width: 44px; height: 44px;">
-                        <?php else: ?>
+                    <?php if ($is_logged_in): ?>
+                        <a href="profile.php" aria-label="View user profile">
+                            <?php if ($foto): ?>
+                                <img src="image/<?php echo $foto; ?>" class="icon-img profile-avatar" alt="" width="44" height="44" style="border-radius: 50%; object-fit: cover; filter: none; width: 44px; height: 44px;">
+                            <?php else: ?>
+                                <img src="image/profile white.svg" class="icon-img" alt="" width="20" height="20">
+                            <?php endif; ?>
+                        </a>
+                    <?php else: ?>
+                        <a href="login.php" aria-label="Login to access profile">
                             <img src="image/profile white.svg" class="icon-img" alt="" width="20" height="20">
-                        <?php endif; ?>
-                    </a>
+                        </a>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -378,6 +393,9 @@ while ($wishlist_row = mysqli_fetch_assoc($wishlist_query)) {
             }
         }
 
+        // Check if user is logged in (passed from PHP)
+        const isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
+
         // Category filter submission
         function submitCategoryFilter() {
             document.getElementById('categoryFilter').submit();
@@ -385,6 +403,11 @@ while ($wishlist_row = mysqli_fetch_assoc($wishlist_query)) {
 
         // Toggle Cart function
         function toggleCart(button) {
+            if (!isLoggedIn) {
+                showNotification('Please log in to add items to your cart', 'warning');
+                return;
+            }
+
             const productId = button.dataset.productId;
             const inCart = button.dataset.inCart === 'true';
             const newStatus = !inCart;
@@ -442,6 +465,11 @@ while ($wishlist_row = mysqli_fetch_assoc($wishlist_query)) {
 
         // Toggle Wishlist function
         function toggleWishlist(button) {
+            if (!isLoggedIn) {
+                showNotification('Please log in to add items to your wishlist', 'warning');
+                return;
+            }
+
             const produkId = button.dataset.produkId;
             const inWishlist = button.dataset.inWishlist === 'true';
             const newStatus = !inWishlist;
