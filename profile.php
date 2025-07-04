@@ -56,7 +56,7 @@ if (isset($_POST['simpan'])) {
         $check_password = mysqli_query($con, "SELECT password FROM users WHERE id = '$user_id'");
         if ($check_password && mysqli_num_rows($check_password) > 0) {
             $user_data = mysqli_fetch_assoc($check_password);
-            if (!password_verify($current_password, $user_data['password'])) {
+            if (!$current_password == $user_data['password']) {
                 http_response_code(400);
                 echo json_encode(['success' => false, 'message' => 'Current password is incorrect.']);
                 exit();
