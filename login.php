@@ -1,75 +1,6 @@
 <?php  
    session_start();
    require "koneksi.php";     
-   require_once 'vendor/autoload.php';
-   
-
-   $clientID = '1031284088121-ognjp4jh2u43henjbunau110tt8q79ho.apps.googleusercontent.com';
-   $clientSecret = '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';
-   $redirectUri = 'http://localhost/ppw/login.php';
-   
-   $client = new Google_Client();
-   $client->setClientId($clientID);
-   $client->setClientSecret($clientSecret);
-   $client->setRedirectUri($redirectUri);
-   $client->addScope("email");
-   $client->addScope("profile");
-   
-   if (isset($_GET['code'])) {
-       $token = $client->fetchAccessTokenWithAuthCode($_GET['code']);
-       $client->setAccessToken($token['access_token']);
-   
-        
-       $google_oauth = new Google_Service_Oauth2($client);
-       $google_account_info = $google_oauth->userinfo->get();
-       $email = $google_account_info->email;
-       $name = $google_account_info->name;
-   
-       
-       $sql_check = "SELECT * FROM users WHERE email=?";
-       $stmt_check = $con->prepare($sql_check);
-       $stmt_check->bind_param("s", $email);
-       $stmt_check->execute();
-       $result_check = $stmt_check->get_result();
-       $count = $result_check->num_rows;
-   
-       if ($count == 0) {
-           
-           $sql_insert = "INSERT INTO users (username, email, password, role) VALUES (?, ?, '', 'user')"; 
-           $stmt_insert = $con->prepare($sql_insert);
-           $stmt_insert->bind_param("ss", $name, $email);
-       
-           if ($stmt_insert->execute()) {
-               
-               $user_id = $stmt_insert->insert_id; 
-               $role = 'user';
-           } else {
-               die("Insert failed: " . $stmt_insert->error);
-           }
-       } else {
-           
-           $row = $result_check->fetch_assoc(); 
-           $user_id = $row['id']; 
-           $name = $row['username'];  
-           $role = $row['role'];
-       }
-   
-       $_SESSION['user_id'] = $user_id; 
-       $_SESSION['loginbtn'] = true;
-       $_SESSION['username'] = $name;
-       $_SESSION['email'] = $email;
-       $_SESSION['role'] = $role;
-
-       if ($role == 'admin') {
-        header("Location: admin.php");
-       } else {
-        header("Location: dashboard.php");
-       }
-       exit();
-   }       
-    
-        
-
 
     $loginError = '';
     $captchaError = '';
@@ -236,16 +167,6 @@
                                 Don't have an account? <a href="register.php" style="color: var(--primary); text-decoration: none; font-weight: 500;">Create one</a>
                             </p>
                         </div>
-
-                        <div style="text-align: center; margin: var(--space-lg) 0; position: relative;">
-                            <div style="height: 1px; background: var(--glass-border); margin: var(--space-md) 0;"></div>
-                            <span style="background: var(--bg-primary); padding: 0 var(--space-md); color: var(--text-secondary); font-size: 0.9rem; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">or continue with</span>
-                        </div>
-
-                        <a href="<?php echo $client->createAuthUrl(); ?>" class="google-button" style="display: flex; align-items: center; justify-content: center; gap: var(--space-sm); width: 100%; padding: var(--space-md); border: 2px solid var(--glass-border); border-radius: var(--radius-md); background: var(--bg-glass); color: var(--text-primary); text-decoration: none; font-weight: 500; transition: var(--transition-fast); backdrop-filter: var(--glass-blur);">
-                            <img src="https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-512.png" alt="Google Logo" style="width: 20px; height: 20px;" />
-                            <span>Continue with Google</span>
-                        </a>
                     </form>
                 </div>
             </div>
@@ -260,13 +181,7 @@
         </div>
     </footer>
 
-    <style>
-        .google-button:hover {
-            background: var(--bg-glass-hover);
-            border-color: var(--primary);
-            transform: translateY(-2px);
-        }
-        
+    <style>        
         .error-notification {
             animation: slideIn 0.3s ease-out;
         }
